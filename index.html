@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MetaLM - Hindsight 记忆管理</title>
+<style>
+  :root {
+    --primary: #10b981;
+    --primary-light: #d1fae5;
+    --primary-dark: #059669;
+    --bg: #f8fafc;
+    --sidebar-bg: #ffffff;
+    --card-bg: #ffffff;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
+    --border: #e2e8f0;
+    --border-light: #f1f5f9;
+    --danger: #ef4444;
+    --danger-light: #fef2f2;
+    --warning: #f59e0b;
+    --warning-light: #fffbeb;
+    --info: #3b82f6;
+    --info-light: #eff6ff;
+    --radius: 10px;
+    --radius-sm: 6px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+    --sidebar-width: 220px;
+    --header-height: 48px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .app-shell { display: flex; height: 100vh; }
+
+  /* ===== Sidebar ===== */
+  .sidebar {
+    width: var(--sidebar-width); background: var(--sidebar-bg);
+    border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; z-index: 10;
+  }
+  .sidebar-header {
+    padding: 16px 18px; display: flex; align-items: center; gap: 9px;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .logo-icon {
+    width: 28px; height: 28px; background: linear-gradient(135deg, var(--primary), #34d399);
+    border-radius: 7px; display: flex; align-items: center; justify-content: center;
+    color: white; font-weight: 700; font-size: 14px;
+  }
+  .logo-text { font-size: 17px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.3px; }
+  .nav-section-title {
+    padding: 14px 18px 8px; font-size: 11px; font-weight: 600; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.8px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 11px; padding: 9px 18px; cursor: pointer;
+    transition: all 0.15s ease; color: var(--text-secondary); font-size: 13.5px;
+    position: relative; user-select: none;
+  }
+  .nav-item:hover { background: var(--bg); color: var(--text-primary); }
+  .nav-item.active { background: var(--primary-light); color: var(--primary-dark); font-weight: 500; }
+  .nav-item.active::before {
+    content: ''; position: absolute; left: 0; top: 4px; bottom: 4px;
+    width: 3px; background: var(--primary); border-radius: 0 3px 3px 0;
+  }
+  .nav-icon { width: 18px; height: 18px; opacity: 0.75; flex-shrink: 0; }
+  .nav-item.active .nav-icon { opacity: 1; }
+  .sidebar-footer { margin-top: auto; padding: 12px 16px; border-top: 1px solid var(--border-light); }
+  .back-chat-btn {
+    display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 12px;
+    border: 1px solid var(--border); border-radius: var(--radius-sm); background: white;
+    cursor: pointer; font-size: 13px; color: var(--text-secondary); transition: all 0.15s;
+  }
+  .back-chat-btn:hover { border-color: var(--primary); color: var(--primary-dark); }
+  .btn-icon { width: 15px; height: 15px; }
+
+  /* ===== Main Content ===== */
+  .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+  .top-bar {
+    height: var(--header-height); display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px; border-bottom: 1px solid var(--border); background: white; flex-shrink: 0;
+  }
+  .top-bar-left { display: flex; align-items: center; gap: 10px; }
+  .top-bar-btn {
+    width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--border); border-radius: var(--radius-sm); background: white;
+    cursor: pointer; color: var(--text-secondary); transition: all 0.15s;
+  }
+  .top-bar-btn:hover { border-color: var(--text-muted); color: var(--text-primary); }
+  .top-bar-btn svg { width: 14px; height: 14px; }
+  .app-title { font-size: 15px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.2px; }
+  .window-controls { display: flex; gap: 6px; }
+  .wc-btn {
+    width: 30px; height: 26px; display: flex; align-items: center; justify-content: center;
+    border-radius: 5px; cursor: pointer; font-size: 12px; color: var(--text-muted); transition: all 0.15s;
+  }
+  .wc-btn:hover { background: var(--bg); color: var(--text-primary); }
+  .wc-btn svg { width: 12px; height: 12px; }
+
+  /* ===== Content Area ===== */
+  .content-area { flex: 1; overflow-y: auto; padding: 28px 32px; }
+
+  .page-header { margin-bottom: 22px; }
+  .page-title-row { display: flex; justify-content: space-between; align-items: center; }
+  .page-title { font-size: 22px; font-weight: 700; color: var(--text-primary); }
+  .reload-btn {
+    display: flex; align-items: center; gap: 5px; padding: 6px 14px;
+    border: 1px solid var(--border); border-radius: var(--radius-sm); background: white;
+    cursor: pointer; font-size: 12.5px; color: var(--text-secondary); transition: all 0.15s;
+  }
+  .reload-btn:hover { border-color: var(--primary); color: var(--primary-dark); }
+  .reload-btn svg { width: 13px; height: 13px; }
+
+  /* ===== Global Actions Bar ===== */
+  .global-actions-bar {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 22px;
+    padding: 12px 16px; background: white; border: 1px solid var(--border-light);
+    border-radius: var(--radius); box-shadow: var(--shadow-sm);
+  }
+  .global-action-item {
+    display: flex; align-items: center; gap: 7px; padding: 6px 14px;
+    border: 1px solid var(--border); border-radius: var(--radius-sm); background: white;
+    cursor: pointer; font-size: 12.5px; color: var(--text-secondary); transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .global-action-item:hover { border-color: var(--primary); color: var(--primary-dark); background: var(--primary-light); }
+  .global-action-item svg { width: 15px; height: 15px; flex-shrink: 0; }
+  .global-action-item.danger:hover { border-color: var(--danger); color: var(--danger); background: var(--danger-light); }
+  .global-search-mini {
+    display: flex; align-items: center; gap: 9px; padding: 8px 14px;
+    border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg);
+    flex: 1; max-width: 420px; transition: all 0.2s;
+  }
+  .global-search-mini:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(16,185,129,0.12); background: white; }
+  .global-search-mini input {
+    border: none; outline: none; font-size: 13.5px; background: transparent; width: 100%; color: var(--text-primary);
+  }
+  .global-search-mini input::placeholder { color: var(--text-muted); }
+  .global-search-mini svg { width: 16px; height: 16px; color: var(--text-muted); flex-shrink: 0; }
+
+  /* ===== Tab Navigation ===== */
+  .section-tabs {
+    display: flex; gap: 4px; margin-bottom: 22px; background: white; padding: 4px;
+    border-radius: var(--radius); box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); width: fit-content;
+  }
+  .section-tab {
+    padding: 8px 18px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500;
+    color: var(--text-secondary); transition: all 0.2s ease; border: none; background: transparent; white-space: nowrap;
+  }
+  .section-tab:hover { background: var(--bg); color: var(--text-primary); }
+  .section-tab.active { background: var(--primary); color: white; box-shadow: 0 2px 6px rgba(16,185,129,0.25); }
+  .section-tab .tab-badge {
+    display: inline-block; min-width: 18px; height: 18px; line-height: 18px; text-align: center;
+    border-radius: 9px; font-size: 11px; font-weight: 600; margin-left: 5px;
+    background: rgba(255,255,255,0.25);
+  }
+  .section-tab:not(.active) .tab-badge { background: var(--border-light); color: var(--text-muted); }
+
+  /* ===== Card ===== */
+  .card {
+    background: var(--card-bg); border: 1px solid var(--border-light);
+    border-radius: var(--radius); box-shadow: var(--shadow-sm); overflow: hidden; margin-bottom: 20px;
+  }
+  .card-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--border-light); }
+  .card-title { font-size: 14.5px; font-weight: 600; color: var(--text-primary); }
+  .card-body { padding: 16px 20px; }
+
+  /* Sub-tabs for world / experience */
+  .sub-tabs { display: flex; gap: 2px; margin-bottom: 16px; background: var(--bg); padding: 3px; border-radius: 7px; width: fit-content; }
+  .sub-tab { padding: 5px 14px; border-radius: 5px; cursor: pointer; font-size: 12.5px; font-weight: 500; color: var(--text-secondary); border: none; background: transparent; transition: all 0.15s; }
+  .sub-tab:hover { color: var(--text-primary); }
+  .sub-tab.active { background: white; color: var(--text-primary); box-shadow: var(--shadow-sm); font-weight: 600; }
+
+  /* Status Tabs (for Observation) */
+  .status-tabs { display: flex; gap: 2px; margin-bottom: 16px; background: var(--bg); padding: 3px; border-radius: 7px; width: fit-content; }
+  .status-tab { padding: 5px 14px; border-radius: 5px; cursor: pointer; font-size: 12.5px; font-weight: 500; color: var(--text-secondary); border: none; background: transparent; transition: all 0.15s; }
+  .status-tab:hover { color: var(--text-primary); }
+  .status-tab.active { background: white; color: var(--text-primary); box-shadow: var(--shadow-sm); font-weight: 600; }
+  .status-count { font-size: 11px; color: var(--text-muted); margin-left: 3px; }
+
+  /* Toolbar */
+  .toolbar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .search-box { display: flex; align-items: center; gap: 7px; padding: 6px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: white; min-width: 200px; flex: 1; max-width: 320px; transition: border-color 0.15s; }
+  .search-box:focus-within { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(16,185,129,0.1); }
+  .search-box input { border: none; outline: none; font-size: 13px; background: transparent; flex: 1; width: 100%; color: var(--text-primary); }
+  .search-box input::placeholder { color: var(--text-muted); }
+  .search-box svg { width: 14px; height: 14px; color: var(--text-muted); flex-shrink: 0; }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; gap: 5px; padding: 6px 13px;
+    border-radius: var(--radius-sm); border: 1px solid var(--border); background: white;
+    cursor: pointer; font-size: 12.5px; font-weight: 500; color: var(--text-secondary);
+    transition: all 0.15s; white-space: nowrap;
+  }
+  .btn svg { width: 13px; height: 13px; }
+  .btn:hover { border-color: var(--text-muted); color: var(--text-primary); }
+  .btn-primary { background: var(--primary); border-color: var(--primary); color: white; }
+  .btn-primary:hover { background: var(--primary-dark); border-color: var(--primary-dark); }
+  .btn-danger { color: var(--danger); border-color: #fecaca; }
+  .btn-danger:hover { background: var(--danger-light); border-color: var(--danger); }
+  .btn-warning { color: var(--warning); border-color: #fde68a; }
+  .btn-warning:hover { background: var(--warning-light); border-color: var(--warning); }
+  .btn-sm { padding: 4px 10px; font-size: 11.5px; }
+  .btn-sm svg { width: 12px; height: 12px; }
+
+  /* Table */
+  .data-table { width: 100%; border-collapse: collapse; }
+  .data-table thead th {
+    text-align: left; padding: 10px 14px; font-size: 12px; font-weight: 600; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border-light);
+  }
+  .data-table tbody td { padding: 11px 14px; font-size: 13px; color: var(--text-primary); border-bottom: 1px solid var(--border-light); vertical-align: middle; }
+  .data-table tbody tr:hover { background: var(--bg); }
+  .data-table tbody tr:last-child td { border-bottom: none; }
+  .checkbox { width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; }
+
+  /* Tags — 三种记忆类型 + 观察状态 */
+  .tag { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 10px; font-size: 11.5px; font-weight: 500; }
+  .tag-world { background: #e0f2fe; color: #0369a1; }        /* blue — 世界事实 */
+  .tag-experience { background: #ede9fe; color: #7c3aed; }     /* purple — 经历事件 */
+  .tag-observation { background: #fef3c7; color: #b45309; }    /* amber — 观察/归纳 */
+  .tag-published { background: var(--primary-light); color: var(--primary-dark); }
+  .tag-draft { background: var(--warning-light); color: #b45309; }
+  .tag-unpublished { background: var(--info-light); color: #1d4ed8; }
+  .tag-source-system { background: #e0f2fe; color: #0369a1; }
+  .tag-source-manual { background: #f1f5f9; color: #475569; }
+
+  /* Action Buttons */
+  .action-group { display: flex; gap: 4px; }
+  .action-btn {
+    width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid var(--border); border-radius: var(--radius-sm); background: white;
+    cursor: pointer; color: var(--text-secondary); transition: all 0.15s;
+  }
+  .action-btn svg { width: 14px; height: 14px; }
+  .action-btn:hover { border-color: var(--primary); color: var(--primary-dark); background: var(--primary-light); }
+  .action-btn.danger:hover { border-color: var(--danger); color: var(--danger); background: var(--danger-light); }
+
+  /* Section Panels */
+  .section-panel { display: none; animation: fadeIn 0.25s ease; }
+  .section-panel.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Modal */
+  .modal-overlay {
+    display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.35); z-index: 100; align-items: center; justify-content: center;
+    backdrop-filter: blur(2px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: white; border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+    width: 520px; max-width: 90vw; max-height: 85vh; overflow-y: auto; animation: modalIn 0.25s ease;
+  }
+  @keyframes modalIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--border-light); }
+  .modal-title { font-size: 16px; font-weight: 700; }
+  .modal-close {
+    width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+    border: none; background: none; cursor: pointer; border-radius: 6px; color: var(--text-muted);
+  }
+  .modal-close:hover { background: var(--bg); color: var(--text-primary); }
+  .modal-close svg { width: 16px; height: 16px; }
+  .modal-body { padding: 22px; }
+  .form-group { margin-bottom: 18px; }
+  .form-label { display: block; font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; }
+  .form-input {
+    width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+    font-size: 13.5px; outline: none; transition: border-color 0.15s; color: var(--text-primary);
+  }
+  .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(16,185,129,0.1); }
+  .form-textarea { resize: vertical; min-height: 100px; font-family: inherit; line-height: 1.6; }
+  .form-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M3 4.5l3 3 3-3'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 34px; }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 22px; border-top: 1px solid var(--border-light); }
+
+  /* Toast */
+  .toast-container { position: fixed; top: 60px; right: 24px; z-index: 200; display: flex; flex-direction: column; gap: 8px; }
+  .toast {
+    display: flex; align-items: center; gap: 9px; padding: 12px 18px; border-radius: var(--radius);
+    background: white; box-shadow: 0 8px 24px rgba(0,0,0,0.12); font-size: 13px; color: var(--text-primary);
+    animation: toastIn 0.3s ease; min-width: 240px; border-left: 3px solid var(--primary);
+  }
+  .toast svg { width: 18px; height: 18px; flex-shrink: 0; }
+  .toast.success { border-left-color: var(--primary); }
+  .toast.success svg { color: var(--primary); }
+  .toast.error { border-left-color: var(--danger); }
+  .toast.error svg { color: var(--danger); }
+  .toast.warning { border-left-color: var(--warning); }
+  .toast.warning svg { color: var(--warning); }
+  @keyframes toastIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+
+  /* Pagination */
+  .pagination { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 16px 0; }
+  .page-btn {
+    width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--border); border-radius: var(--radius-sm); background: white;
+    cursor: pointer; font-size: 13px; color: var(--text-secondary); transition: all 0.15s;
+  }
+  .page-btn:hover { border-color: var(--primary); color: var(--primary-dark); }
+  .page-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+
+  /* Global Search Results */
+  .global-search-results { display: none; }
+  .global-search-placeholder { padding: 30px; text-align: center; color: var(--text-muted); }
+  .global-search-placeholder svg { width: 32px; height: 32px; opacity: 0.25; margin-bottom: 8px; }
+
+  /* Memory Preview */
+  .memory-preview { background: #fafaf9; border: 1px solid var(--border-light); border-radius: var(--radius); padding: 18px 22px; font-family: 'SF Mono', 'Consolas', monospace; font-size: 12.5px; line-height: 1.75; color: var(--text-secondary); max-height: 280px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
+  .memory-preview::-webkit-scrollbar { width: 5px; }
+  .memory-preview::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* Type definition hint card */
+  .type-hint-card {
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9); border: 1px solid var(--border-light);
+    border-radius: var(--radius); padding: 14px 18px; margin-bottom: 16px; font-size: 12px; color: var(--text-secondary);
+    display: flex; gap: 20px; flex-wrap: wrap;
+  }
+  .type-hint-item { display: flex; align-items: center; gap: 6px; }
+  .type-hint-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ===== Sidebar ===== -->
+  <aside class="sidebar">
+    <div class="sidebar-header"><div class="logo-icon">M</div><span class="logo-text">MetaLM</span></div>
+    <nav>
+      <div class="nav-item"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>模型</div>
+      <div class="nav-item"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>技能</div>
+      <div class="nav-item"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>MCP 与语音</div>
+      <div class="nav-item active"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 017 7c0 3-2 5-4 7s-3 4-3 6H12c0-2-1-4-3-6S5 12 5 9a7 7 0 017-7z"/><circle cx="12" cy="19" r="1"/><path d="M10 21h4"/></svg>记忆</div>
+      <div class="nav-item"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>知识库</div>
+      <div class="nav-section-title">应用</div>
+      <div class="nav-item"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>显示</div>
+      <div class="nav-item"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>远程连接</div>
+      <div class="nav-item"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>桌面宠物</div>
+      <div class="nav-item"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>系统</div>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="back-chat-btn" onclick="showToast('返回聊天界面', 'success')">
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        返回聊天
+      </button>
+    </div>
+  </aside>
+
+  <!-- ===== Main ===== -->
+  <main class="main-content">
+    <header class="top-bar">
+      <div class="top-bar-left">
+        <button class="top-bar-btn" title="返回"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <button class="top-bar-btn" title="前进"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
+        <span class="app-title">MetaLM</span>
+      </div>
+      <div class="window-controls">
+        <div class="wc-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+        <div class="wc-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div>
+        <div class="wc-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
+      </div>
+    </header>
+
+    <div class="content-area">
+
+      <!-- Page Header -->
+      <div class="page-header">
+        <h1 class="page-title">Hindsight 记忆管理</h1>
+      </div>
+
+      <!-- ===== Global Actions Bar ===== -->
+      <div class="global-actions-bar">
+        <div class="global-search-mini">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" placeholder="搜索全部记忆（world / experience / observation）..." id="global-search-input" onkeyup="if(event.key==='Enter')doGlobalSearch()">
+        </div>
+        <button class="global-action-item" onclick="showToast('数据已刷新', 'success')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10"/><path d="M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+          刷新
+        </button>
+        <button class="global-action-item danger" onclick="confirmAction('确认清空所有 Hindsight 记忆？\n包括 world、experience、observation 全部内容。\n此操作不可撤销！')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+          清空全部
+        </button>
+      </div>
+
+      <!-- ===== Section Tabs ===== -->
+      <div class="section-tabs">
+        <button class="section-tab active" data-section="entries" onclick="switchSection('entries')">记忆条目<span class="tab-badge">12</span></button>
+        <button class="section-tab" data-section="observation" onclick="switchSection('observation')">观察<span class="tab-badge">5</span></button>
+        <button class="section-tab" data-section="history" onclick="switchSection('history')">对话历史</button>
+        <button class="section-tab" data-section="trash" onclick="switchSection('trash')">回收站<span class="tab-badge">2</span></button>
+      </div>
+
+      <!-- ========== Section 1: 记忆条目 (world / experience) ========== -->
+      <div id="panel-entries" class="section-panel active">
+
+        <!-- Type hint -->
+        <div class="type-hint-card">
+          <div class="type-hint-item"><span class="type-hint-dot" style="background:#0369a1;"></span><strong>World</strong> — 客观事实、外部事实、用户相关事实</div>
+          <div class="type-hint-item"><span class="type-hint-dot" style="background:#7c3aed;"></span><strong>Experience</strong> — 事件、经历、对话上下文、时间相关事实</div>
+        </div>
+
+        <div class="sub-tabs">
+          <button class="sub-tab active" onclick="switchSubTab(this,'world-list')">World</button>
+          <button class="sub-tab" onclick="switchSubTab(this,'exp-list')">Experience</button>
+        </div>
+
+        <!-- World 列表 -->
+        <div id="world-list" class="sub-panel">
+          <div class="toolbar-row">
+            <div class="search-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" placeholder="搜索 world 条目...">
+            </div>
+            <button class="btn btn-sm btn-danger" onclick="showToast('批量删除选中项', 'warning')">批量删除</button>
+            <button class="btn btn-sm btn-danger" onclick="confirmAction('确认清空所有 world 条目？')">清空</button>
+          </div>
+          <table class="data-table">
+            <thead><tr><th style="width:36px;"><input type="checkbox" class="checkbox" onchange="toggleSelectAll(event)"></th><th>ID</th><th>内容摘要</th><th>类型</th><th>来源</th><th>创建时间</th><th style="width:120px;">操作</th></tr></thead>
+            <tbody>
+              <tr><td><input type="checkbox" class="checkbox row-check"></td><td>#W001</td><td>用户住在无锡</td><td><span class="tag tag-world">world</span></td><td>对话提取</td><td>2026-05-20 10:00</td><td><div class="action-group">
+                <button class="action-btn" title="查看" onclick="viewItem('world','用户住在无锡，江苏省无锡市， timezone Asia/Shanghai')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                <button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+              </div></td></tr>
+              <tr><td><input type="checkbox" class="checkbox row-check"></td><td>#W002</td><td>项目使用 React 技术栈</td><td><span class="tag tag-world">world</span></td><td>GEMINI.md</td><td>2026-05-18 14:30</td><td><div class="action-group">
+                <button class="action-btn" title="查看" onclick="viewItem('world','当前项目前端使用 React 框架，版本 18.x，配合 Tailwind CSS')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                <button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+              </div></td></tr>
+              <tr><td><input type="checkbox" class="checkbox row-check"></td><td>#W003</td><td>腾讯产品经理 / 开发人员</td><td><span class="tag tag-world">world</span></td><td>对话提取</td><td>2026-05-15 09:00</td><td><div class="action-group">
+                <button class="action-btn" title="查看" onclick="viewItem('world','用户在腾讯工作，角色为产品经理或开发人员')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                <button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+              </div></td></tr>
+              <tr><td><input type="checkbox" class="checkbox row-check"></td><td>#W004</td><td>偏好简体中文交流</td><td><span class="tag tag-world">world</span></td><td>多次对话归纳</td><td>2026-06-01 08:00</td><td><div class="action-group">
+                <button class="action-btn" title="查看" onclick="viewItem('world','用户在所有交互中偏好使用简体中文进行沟通和输出')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                <button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+              </div></td></tr>
+              <tr><td><input type="checkbox" class="checkbox row-check"></td><td>#W005</td><td>长期关注协作工具市场（Notion/Figma/Miro/飞书）</td><td><span class="tag tag-world">world</span></td><td>对话提取</td><td>2026-05-27 11:00</td><td><div class="action-group">
+                <button class="action-btn" title="查看" onclick="viewItem('world','用户长期关注 AI 协作工具市场动态，主要竞品包括 Notion、Figma、Miro、飞书文档等')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                <button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+              </div></td></tr>
+              <tr><td><input type="checkbox" class="checkbox row-check"></td><td>#W006</td><td>偏好绿色作为主题色</td><td><span class="tag tag-world">world</span></td><td>对话提取</td><td>2026-05-28 20:45</td><td><div class="action-group">
+                <button class="action-btn" title="查看" onclick="viewItem('world','用户偏好使用绿色系配色方案作为应用主题色')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                <button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+              </div></td></tr>
+            </tbody>
+          </table>
+          <div class="pagination">
+            <button class="page-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><polyline points="15 18 9 12 15 6"/></svg></button>
+            <button class="page-btn active">1</button>
+            <button class="page-btn">2</button>
+            <button class="page-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><polyline points="9 18 15 12 9 6"/></svg></button>
+          </div>
+        </div>
+
+        <!-- Experience 列表 -->
+        <div id="exp-list" class="sub-panel" style="display:none;">
+          <div class="toolbar-row">
+            <div class="search-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" placeholder="搜索 experience 条目...">
+            </div>
+            <button class="btn btn-sm btn-danger" onclick="showToast('批量删除选中项', 'warning')">批量删除</button>
+            <button class="btn btn-sm btn-danger" onclick="confirmAction('确认清空所有 experience 条目？')">清空</button>
+          </div>
+          <table class="data-table">
+            <thead><tr><th style="width:36px;"><input type="checkbox" class="checkbox" onchange="toggleSelectAll(event)"></th><th>ID</th><th>内容摘要</th><th>类型</th><th>关联会话</th><th>创建时间</th><th style="width:120px;">操作</th></tr></thead>
+            <tbody>
+              <tr><td><input type="checkbox" class="checkbox row-check"></td><td>#E001</td><td>用户在某次对话中默认使用 Hindsight 进行记忆管理</td><td><span class="tag tag-experience">experience</span></td><td>白板原型讨论</td><td>2026-06-02 15:30</td><td><div class="action-group">
+                <button class="action-btn" title="查看" onclick="viewItem('experience','用户在白板原型的功能讨论对话中，主动选择使用 Hindsight 作为记忆管理方案，表明对系统化记忆管理的认可')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                <button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+              </div></td></tr>
+              <tr><td><input type="checkbox" class="checkbox row-check"></td><td>#E002</td><td>工作中偏好使用深色模式编辑器</td><td><span class="tag tag-experience">experience</span></td><td>UI 设计确认</td><td>2026-06-01 09:12</td><td><div class="action-group">
+                <button class="action-btn" title="查看" onclick="viewItem('experience','在 UI 设计风格确认的对话中，用户明确表示工作中偏好使用深色模式的代码编辑器')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                <button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+              </div></td></tr>
+              <tr><td><input type="checkbox" class="checkbox row-check"></td><td>#E003</td><td>提出定时任务需求：下午 4 点财经新闻 + 下午 6 点趋势总结</td><td><span class="tag tag-experience">experience</span></td><td>定时任务规划</td><td>2026-06-03 08:00</td><td><div class="action-group">
+                <button class="action-btn" title="查看" onclick="viewItem('experience','用户在定时任务规划中提出：每天下午 4 点自动查询当日财经新闻，下午 6 点总结行业趋势和竞品动态')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                <button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+              </div></td></tr>
+              <tr><td><input type="checkbox" class="checkbox row-check"></td><td>#E004</td><td>启动 metalm_v3 网页及类 Miro 白板原型开发</td><td><span class="tag tag-experience">experience</span></td><td>项目初始化</td><td>2026-05-30 09:33</td><td><div class="action-group">
+                <button class="action-btn" title="查看" onclick="viewItem('experience','用户启动了 metalm_v3 项目开发，目标是实现包含无限画布、便签、画笔、连线等功能的类 Miro 协作白板原型')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                <button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+              </div></td></tr>
+              <tr><td><input type="checkbox" class="checkbox row-check"></td><td>#E005</td><td>要求逐步迭代修改，每次针对一个具体问题调整</td><td><span class="tag tag-experience">experience</span></td><td>UI 设计确认</td><td>2026-06-01 14:10</td><td><div class="action-group">
+                <button class="action-btn" title="查看" onclick="viewItem('experience','在设计交互原型的过程中，用户强调采用增量迭代方式，每次只聚焦一个具体问题进行调整')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                <button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+              </div></td></tr>
+            </tbody>
+          </table>
+          <div class="pagination">
+            <button class="page-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><polyline points="15 18 9 12 15 6"/></svg></button>
+            <button class="page-btn active">1</button>
+            <button class="page-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><polyline points="9 18 15 12 9 6"/></svg></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== Section 2: 观察 (Observation) ========== -->
+      <div id="panel-observation" class="section-panel">
+
+        <!-- Type hint -->
+        <div class="type-hint-card">
+          <div class="type-hint-item"><span class="type-hint-dot" style="background:#0369a1;"></span><strong>系统归纳</strong> — 从多条 world/experience 自动推导的高层模式</div>
+          <div class="type-hint-item"><span class="type-hint-dot" style="background:#475569;"></span><strong>手动创建</strong> — 用户自行添加的行为偏好或任务规则</div>
+        </div>
+
+        <div class="status-tabs">
+          <button class="status-tab active" onclick="switchStatusTab(this,'obs-published')">已发布<span class="status-count">(2)</span></button>
+          <button class="status-tab" onclick="switchStatusTab(this,'obs-draft')">草稿<span class="status-count">(2)</span></button>
+          <button class="status-tab" onclick="switchStatusTab(this,'obs-unpublished')">未发布<span class="status-count">(1)</span></button>
+        </div>
+
+        <div id="obs-published" class="status-panel">
+          <div class="toolbar-row">
+            <div class="search-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="搜索已发布的观察..."></div>
+            <button class="btn btn-primary" onclick="openModal('add-obs-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>添加</button>
+          </div>
+          <table class="data-table">
+            <thead><tr><th style="width:36px;"><input type="checkbox" class="checkbox"></th><th>标题</th><th>归纳依据</th><th>来源</th><th>状态</th><th>更新时间</th><th style="width:170px;">操作</th></tr></thead>
+            <tbody>
+              <tr><td><input type="checkbox" class="checkbox row-check"></td><td>偏好简体中文回答</td><td>源自 3 条 world + 2 条 experience</td><td><span class="tag tag-source-system">系统归纳</span></td><td><span class="tag tag-published">已发布</span></td><td>2026-06-03 10:00</td><td><div class="action-group">
+                <button class="action-btn" title="查看" onclick="viewItem('observation','偏好简体中文回答：基于 #W004（偏好简体中文交流）、#E001（默认使用 Hindsight）、#E005（逐步迭代修改）等 3 条 world + 2 条 experience 归纳得出。用户在所有交互中始终使用简体中文进行输出，这是稳定的行为模式。')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                <button class="action-btn" title="编辑" onclick="openModal('edit-obs-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                <button class="action-btn" title="变更为草稿" onclick="changeStatus(this,'草稿')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+                <button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+              </div></td></tr>
+              <tr><td><input type="checkbox" class="checkbox row-check"></td><td>长期关注 skill 调用稳定性</td><td>源自 4 条 experience</td><td><span class="tag tag-source-system">系统归纳</span></td><td><span class="tag tag-published">已发布</span></td><td>2026-06-02 14:20</td><td><div class="action-group">
+                <button class="action-btn" title="查看" onclick="viewItem('observation','长期关注 skill 调用稳定性：基于 #E001-#E005 共 4 条 experience 归纳得出。用户在多轮对话中反复询问和验证 skill 的调用状态，表明对系统可靠性有较高要求。')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                <button class="action-btn" title="编辑" onclick="openModal('edit-obs-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                <button class="action-btn" title="变更为草稿" onclick="changeStatus(this,'草稿')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+                <button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+              </div></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div id="obs-draft" class="status-panel" style="display:none;">
+          <div class="toolbar-row">
+            <div class="search-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="搜索草稿..."></div>
+            <button class="btn btn-primary" onclick="openModal('add-obs-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>添加</button>
+          </div>
+          <table class="data-table">
+            <thead><tr><th style="width:36px;"><input type="checkbox" class="checkbox"></th><th>标题</th><th>归纳依据</th><th>来源</th><th>状态</th><th>更新时间</th><th style="width:170px;">操作</th></tr></thead>
+            <tbody>
+              <tr><td><input type="checkbox" class="checkbox row-check"></td><td>定时任务：下午4点财经新闻</td><td>源自 #E003</td><td><span class="tag tag-source-system">系统归纳</span></td><td><span class="tag tag-draft">草稿</span></td><td>2026-06-03 09:30</td><td><div class="action-group">
+                <button class="action-btn" title="查看" onclick="viewItem('observation','定时任务：下午4点财经新闻 — 基于 #E003（用户提出定时任务需求）归纳。用户希望每天下午4点自动查询当日财经新闻，通过自动化手段减少手动信息检索的工作量。当前为草稿状态，待发布。')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                <button class="action-btn" title="编辑" onclick="openModal('edit-obs-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                <button class="action-btn" title="发布" onclick="changeStatus(this,'已发布')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></button>
+                <button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+              </div></td></tr>
+              <tr><td><input type="checkbox" class="checkbox row-check"></td><td>定时任务：下午6点趋势总结</td><td>手动录入</td><td><span class="tag tag-source-manual">手动创建</span></td><td><span class="tag tag-draft">草稿</span></td><td>2026-06-03 09:31</td><td><div class="action-group">
+                <button class="action-btn" title="查看" onclick="viewItem('observation','定时任务：下午6点趋势总结 — 基于 #E003 归纳。用户希望每天下午6点自动总结行业趋势和竞品动态（Notion/Figma/Miro/飞书）。当前为草稿状态，待发布。')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                <button class="action-btn" title="编辑" onclick="openModal('edit-obs-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                <button class="action-btn" title="发布" onclick="changeStatus(this,'已发布')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></button>
+                <button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+              </div></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div id="obs-unpublished" class="status-panel" style="display:none;">
+          <div class="toolbar-row">
+            <div class="search-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="搜索未发布..."></div>
+            <button class="btn btn-primary" onclick="openModal('add-obs-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>添加</button>
+          </div>
+          <table class="data-table">
+            <thead><tr><th style="width:36px;"><input type="checkbox" class="checkbox"></th><th>标题</th><th>归纳依据</th><th>来源</th><th>状态</th><th>更新时间</th><th style="width:170px;">操作</th></tr></thead>
+            <tbody>
+              <tr><td><input type="checkbox" class="checkbox row-check"></td><td>竞品关注：飞书文档更新动态</td><td>手动录入</td><td><span class="tag tag-source-manual">手动创建</span></td><td><span class="tag tag-unpublished">未发布</span></td><td>2026-06-01 16:40</td><td><div class="action-group">
+                <button class="action-btn" title="查看" onclick="viewItem('observation','竞品关注：飞书文档更新动态 — 基于 #W005（长期关注协作工具市场）及多条 experience 归纳。用户持续追踪飞书等竞品的功能迭代，尤其关注协作工具的 AI 能力演进。当前为未发布状态。')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                <button class="action-btn" title="编辑" onclick="openModal('edit-obs-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                <button class="action-btn" title="发布" onclick="changeStatus(this,'已发布')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></button>
+                <button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+              </div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ========== Section 3: 对话历史 ========== -->
+      <div id="panel-history" class="section-panel">
+        <div class="toolbar-row">
+          <div class="search-box" style="max-width:400px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="搜索对话历史..."></div>
+        </div>
+        <div class="card">
+          <div class="card-body" style="padding:0;">
+            <table class="data-table">
+              <thead><tr><th>时间</th><th>会话标题</th><th>消息数</th><th>关联记忆</th><th style="width:120px;">操作</th></tr></thead>
+              <tbody>
+                <tr><td style="font-size:12px;color:var(--text-muted);white-space:nowrap;">2026-06-03 13:20</td><td>Hindsight 原型设计讨论</td><td>24</td><td><span class="tag tag-experience" style="font-size:11px;padding:1px 7px;">3 条 experience</span> <span class="tag tag-world" style="font-size:11px;padding:1px 7px;">2 条 world</span></td><td><button class="btn btn-sm" onclick="openMemoryRetrieval('Hindsight 原型设计讨论', [{type:'experience',content:'用户在某次对话中默认使用 Hindsight 进行记忆管理'},{type:'world',content:'项目使用 React 技术栈'},{type:'world',content:'偏好简体中文交流'},{type:'experience',content:'工作中偏好使用深色模式编辑器'},{type:'experience',content:'要求逐步迭代修改，每次针对一个具体问题调整'}])">查看记忆检索</button></td></tr>
+                <tr><td style="font-size:12px;color:var(--text-muted);white-space:nowrap;">2026-06-03 10:05</td><td>定时任务规划</td><td>18</td><td><span class="tag tag-experience" style="font-size:11px;padding:1px 7px;">2 条 experience</span></td><td><button class="btn btn-sm" onclick="openMemoryRetrieval('定时任务规划', [{type:'experience',content:'提出定时任务需求：下午 4 点财经新闻 + 下午 6 点趋势总结'},{type:'experience',content:'偏好使用 WorkBuddy 模板优化界面设计'}])">查看记忆检索</button></td></tr>
+                <tr><td style="font-size:12px;color:var(--text-muted);white-space:nowrap;">2026-06-02 17:42</td><td>竞品分析讨论</td><td>31</td><td><span class="tag tag-world" style="font-size:11px;padding:1px 7px;">3 条 world</span> <span class="tag tag-experience" style="font-size:11px;padding:1px 7px;">2 条 experience</span></td><td><button class="btn btn-sm" onclick="openMemoryRetrieval('竞品分析讨论', [{type:'world',content:'长期关注协作工具市场（Notion/Figma/Miro/飞书）'},{type:'world',content:'用户是腾讯产品经理 / 开发人员'},{type:'world',content:'偏好绿色作为主题色'},{type:'experience',content:'启动 metalm_v3 网页及类 Miro 白板原型开发'},{type:'experience',content:'关注竞品 AI 能力迭代进度'}])">查看记忆检索</button></td></tr>
+                <tr><td style="font-size:12px;color:var(--text-muted);white-space:nowrap;">2026-06-01 14:10</td><td>UI 设计风格确认</td><td>15</td><td><span class="tag tag-experience" style="font-size:11px;padding:1px 7px;">1 条 experience</span> <span class="tag tag-world" style="font-size:11px;padding:1px 7px;">1 条 world</span></td><td><button class="btn btn-sm" onclick="openMemoryRetrieval('UI 设计风格确认', [{type:'experience',content:'工作中偏好使用深色模式编辑器'},{type:'world',content:'偏好绿色作为主题色'}])">查看记忆检索</button></td></tr>
+                <tr><td style="font-size:12px;color:var(--text-muted);white-space:nowrap;">2026-05-30 09:33</td><td>metalm_v3 项目初始化</td><td>42</td><td><span class="tag tag-experience" style="font-size:11px;padding:1px 7px;">4 条 experience</span> <span class="tag tag-world" style="font-size:11px;padding:1px 7px;">2 条 world</span></td><td><button class="btn btn-sm" onclick="openMemoryRetrieval('metalm_v3 项目初始化', [{type:'experience',content:'启动 metalm_v3 网页及类 Miro 白板原型开发'},{type:'experience',content:'确定技术选型：纯 HTML 单文件，Canvas/SVG 实现'},{type:'world',content:'项目使用 React 技术栈'},{type:'world',content:'长期关注协作工具市场（Notion/Figma/Miro/飞书）'},{type:'experience',content:'要求无限画布、便签、画笔、连线、选择工具功能'},{type:'experience',content:'深色工具栏、迷你地图等交互细节确认'}])">查看记忆检索</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="pagination">
+          <button class="page-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><polyline points="15 18 9 12 15 6"/></svg></button>
+          <button class="page-btn active">1</button>
+          <button class="page-btn">2</button>
+          <button class="page-btn">3</button>
+          <button class="page-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><polyline points="9 18 15 12 9 6"/></svg></button>
+        </div>
+      </div>
+
+      <!-- ========== Section 4: 回收站 ========== -->
+      <div id="panel-trash" class="section-panel">
+        <div class="toolbar-row">
+          <div class="search-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="搜索已删除的记忆..."></div>
+          <button class="btn btn-danger" onclick="confirmAction('确定彻底清空回收站？此操作不可撤销！')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>彻底清空</button>
+        </div>
+        <div class="card">
+          <div class="card-body" style="padding:0;">
+            <table class="data-table">
+              <thead><tr><th style="width:36px;"><input type="checkbox" class="checkbox"></th><th>类型</th><th>内容</th><th>删除时间</th><th style="width:160px;">操作</th></tr></thead>
+              <tbody>
+                <tr><td><input type="checkbox" class="checkbox row-check"></td><td><span class="tag tag-experience">experience</span></td><td>旧的测试条目（已废弃）</td><td style="font-size:12px;color:var(--text-muted);">2026-05-29 18:00</td><td><div class="action-group">
+                  <button class="btn btn-sm btn-primary" onclick="restoreItem(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 103.46-12.13L1 10"/>恢复</button>
+                  <button class="btn btn-sm btn-danger" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>彻底删除</button></div></td></tr>
+                <tr><td><input type="checkbox" class="checkbox row-check"></td><td><span class="tag tag-world">world</span></td><td>重复条目：用户住在无锡（合并后冗余）</td><td style="font-size:12px;color:var(--text-muted);">2026-05-28 11:22</td><td><div class="action-group">
+                  <button class="btn btn-sm btn-primary" onclick="restoreItem(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 103.46-12.13L1 10"/>恢复</button>
+                  <button class="btn btn-sm btn-danger" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>彻底删除</button></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end content-area -->
+  </main>
+</div>
+
+<!-- 全局搜索结果面板 -->
+<div id="global-search-results" style="position:absolute;top:0;left:0;right:0;background:white;z-index:50;display:none;padding:24px 32px;border-bottom:1px solid var(--border);box-shadow:var(--shadow-md);">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+    <div style="font-size:14px;font-weight:600;color:var(--text-primary);">搜索结果 <span id="result-count" style="color:var(--primary);"></span></div>
+    <button class="btn btn-sm" onclick="document.getElementById('global-search-results').style.display='none'">关闭</button>
+  </div>
+  <div id="results-container"></div>
+</div>
+
+<!-- ===== Modals ===== -->
+
+<!-- 添加 Observation -->
+<div class="modal-overlay" id="add-obs-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">添加观察 (Observation)</span>
+      <button class="modal-close" onclick="closeModal('add-obs-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">标题</label><input class="form-input" placeholder="观察标题，如：偏好简体中文回答"></div>
+      <div class="form-group"><label class="form-label">描述</label><textarea class="form-input form-textarea" placeholder="描述这条高层观察的归纳逻辑和结论..."></textarea></div>
+      <div class="form-group"><label class="form-label">初始状态</label>
+        <select class="form-input form-select"><option value="draft">草稿</option><option value="published">已发布</option><option value="unpublished">未发布</option></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('add-obs-modal')">取消</button>
+      <button class="btn btn-primary" onclick="closeModal('add-obs-modal');showToast('观察已添加','success')">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 编辑 Observation -->
+<div class="modal-overlay" id="edit-obs-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">编辑观察 (Observation)</span>
+      <button class="modal-close" onclick="closeModal('edit-obs-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">标题</label><input class="form-input" value="偏好简体中文回答"></div>
+      <div class="form-group"><label class="form-label">描述</label><textarea class="form-input form-textarea">基于多条 world 和 experience 归纳得出：用户在所有交互中始终使用简体中文进行输出，包括技术讨论、日常对话、文档撰写等场景。这是用户的稳定行为模式。</textarea></div>
+      <div class="form-group"><label class="form-label">状态</label>
+        <select class="form-input form-select"><option value="published" selected>已发布</option><option value="draft">草稿</option><option value="unpublished">未发布</option></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('edit-obs-modal')">取消</button>
+      <button class="btn btn-primary" onclick="closeModal('edit-obs-modal');showToast('观察已更新','success')">保存修改</button>
+    </div>
+  </div>
+</div>
+
+<!-- 记忆检索详情 -->
+<div class="modal-overlay" id="memory-retrieval-modal">
+  <div class="modal" style="width:620px;">
+    <div class="modal-header">
+      <span class="modal-title">记忆检索 — <span id="mr-session" style="color:var(--primary);"></span></span>
+      <button class="modal-close" onclick="closeModal('memory-retrieval-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body" id="mr-body" style="max-height:60vh;overflow-y:auto;">
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal('memory-retrieval-modal')">关闭</button></div>
+  </div>
+</div>
+
+<!-- 查看详情 -->
+<div class="modal-overlay" id="view-detail-modal">
+  <div class="modal" style="width:640px;">
+    <div class="modal-header">
+      <span class="modal-title">记忆详情</span>
+      <button class="modal-close" onclick="closeModal('view-detail-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">类型</label><div id="vd-type" style="font-size:13.5px;"></div></div>
+      <div class="form-group"><label class="form-label">内容</label><div id="vd-content" class="memory-preview" style="min-height:auto;"></div></div>
+      <div class="form-group"><label class="form-label">元信息</label><div id="vd-meta" style="font-size:12.5px;color:var(--text-secondary)"></div></div>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal('view-detail-modal')">关闭</button></div>
+  </div>
+</div>
+
+<!-- 确认对话框 -->
+<div class="modal-overlay" id="confirm-dialog">
+  <div class="modal" style="width:400px;">
+    <div class="modal-header">
+      <span class="modal-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;vertical-align:-3px;margin-right:5px;color:var(--warning);"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>确认操作</span>
+      <button class="modal-close" onclick="closeModal('confirm-dialog')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body" style="padding:20px 22px;">
+      <p id="confirm-msg" style="font-size:14px;line-height:1.6;"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('confirm-dialog')">取消</button>
+      <button class="btn btn-danger" onclick="closeModal('confirm-dialog');showToast('操作已完成','success')">确认执行</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+function switchSection(name) {
+  document.querySelectorAll('.section-tab').forEach(t => t.classList.toggle('active', t.dataset.section === name));
+  document.querySelectorAll('.section-panel').forEach(p => p.classList.remove('active'));
+  const panel = document.getElementById('panel-' + name);
+  if (panel) panel.classList.add('active');
+}
+function switchSubTab(btn, panelId) {
+  btn.parentElement.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('#panel-entries .sub-panel').forEach(p => p.style.display = 'none');
+  const panel = document.getElementById(panelId);
+  if (panel) panel.style.display = '';
+}
+function switchStatusTab(btn, panelId) {
+  btn.parentElement.querySelectorAll('.status-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.status-panel').forEach(p => p.style.display = 'none');
+  const panel = document.getElementById(panelId);
+  if (panel) panel.style.display = '';
+}
+function toggleSelectAll(e) {
+  const table = e.target.closest('table');
+  if (!table) return;
+  table.querySelectorAll('tbody .row-check').forEach(cb => cb.checked = e.target.checked);
+}
+function deleteRow(btn) {
+  const tr = btn.closest('tr');
+  if (tr && confirm('确认删除这条记录？')) {
+    tr.style.opacity = '0'; tr.style.transition = 'opacity 0.2s';
+    setTimeout(() => tr.remove(), 200);
+    showToast('已删除', 'error');
+  }
+}
+function changeStatus(btn, newStatus) {
+  const tr = btn.closest('tr');
+  const statusTag = tr ? tr.querySelector('.tag') : null;
+  if (!statusTag) return;
+  const statusMap = {'已发布':'tag-published','草稿':'tag-draft','未发布':'tag-unpublished'};
+  statusTag.className = 'tag ' + (statusMap[newStatus] || '');
+  statusTag.textContent = newStatus;
+  showToast('状态已变更为「' + newStatus + '」', 'success');
+}
+function restoreItem(btn) {
+  const tr = btn.closest('tr');
+  if (tr && confirm('确认恢复此条记录？')) {
+    tr.style.opacity = '0'; tr.style.transition = 'opacity 0.2s';
+    setTimeout(() => tr.remove(), 200);
+    showToast('记录已恢复', 'success');
+  }
+}
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('open'); });
+});
+function confirmAction(msg) {
+  document.getElementById('confirm-msg').textContent = msg;
+  document.getElementById('confirm-dialog').classList.add('open');
+}
+function showToast(msg, type) {
+  type = type || 'success';
+  const icons = {success:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+    error:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+    warning:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01  y2="17"/></svg>'
+  };
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.innerHTML = (icons[type] || icons.success) + '<span>' + msg + '</span>';
+  c.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; setTimeout(() => t.remove(), 300); }, 2500);
+}
+function viewItem(type, content) {
+  const tagClass = type === 'world' ? 'tag-world' : type === 'experience' ? 'tag-experience' : 'tag-observation';
+  document.getElementById('vd-type').innerHTML = '<span class="tag ' + tagClass + '">' + type + '</span>';
+  document.getElementById('vd-content').textContent = content || '(无内容)';
+  document.getElementById('vd-meta').innerHTML = '创建时间：2026-06-03<br>最后更新：刚刚';
+  openModal('view-detail-modal');
+}
+function openMemoryRetrieval(sessionName, memories) {
+  document.getElementById('mr-session').textContent = sessionName;
+  var tagMap = {world:'tag-world', experience:'tag-experience', observation:'tag-observation'};
+  var html = '<div style="margin-bottom:12px;font-size:12.5px;color:var(--text-muted);">该对话共提取 <strong>' + memories.length + '</strong> 条关联记忆：</div>';
+  memories.forEach(function(m, i) {
+    html += '<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 14px;margin-bottom:6px;background:var(--bg);border-radius:var(--radius-sm);border:1px solid var(--border-light);">'+
+      '<span class="tag ' + (tagMap[m.type] || '') + '" style="flex-shrink:0;margin-top:2px;">' + m.type + '</span>'+
+      '<div style="flex:1;min-width:0;"><div style="font-size:13px;color:var(--text-primary);line-height:1.6;">#' + (i+1) + '</div><div style="font-size:13px;color:var(--text-secondary);line-height:1.6;">' + m.content + '</div></div></div>';
+  });
+  document.getElementById('mr-body').innerHTML = html;
+  openModal('memory-retrieval-modal');
+}
+function doGlobalSearch() {
+  const q = document.getElementById('global-search-input').value.trim();
+  if (!q) return;
+  document.getElementById('global-search-results').style.display = 'block';
+  const results = [
+    {cat:'world', content:'用户住在无锡'},
+    {cat:'experience', content:'用户在某次对话中默认使用 Hindsight'},
+    {cat:'observation', content:'偏好简体中文回答'}
+  ];
+  document.getElementById('result-count').textContent = '(' + results.length + ')';
+  document.getElementById('results-container').innerHTML = results.map(r =>
+    '<div style="padding:10px 14px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;gap:10px;">'+
+    '<span class="tag '+(r.cat==='world'?'tag-world':r.cat==='experience'?'tag-experience':'tag-observation')+'" style="flex-shrink:0">'+r.cat+'</span>'+
+    '<span style="font-size:13px;">'+r.content+'</span></div>'
+  ).join('');
+}
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+    document.getElementById('global-search-results').style.display = 'none';
+  }
+});
+</script>
+</body>
+</html>
