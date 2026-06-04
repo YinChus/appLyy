@@ -223,6 +223,15 @@
   .data-table tbody td { padding: 11px 14px; font-size: 13px; color: var(--text-primary); border-bottom: 1px solid var(--border-light); vertical-align: middle; }
   .data-table tbody tr:hover { background: var(--bg); }
   .data-table tbody tr:last-child td { border-bottom: none; }
+  .data-table tbody tr.highlight-row {
+    animation: rowPulse 1.2s ease-out;
+    background: rgba(56,189,248,0.12) !important;
+  }
+  @keyframes rowPulse {
+    0% { background: rgba(56,189,248,0.22); box-shadow: inset 3px 0 0 #0ea5e9; }
+    60% { background: rgba(56,189,248,0.10); }
+    100% { background: transparent; box-shadow: inset 3px 0 0 transparent; }
+  }
   .checkbox { width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; }
 
   /* Tags — 三种记忆类型 + 观察状态 */
@@ -230,11 +239,102 @@
   .tag-world { background: #e0f2fe; color: #0369a1; }        /* blue — 世界事实 */
   .tag-experience { background: #ede9fe; color: #7c3aed; }     /* purple — 经历事件 */
   .tag-observation { background: #fef3c7; color: #b45309; }    /* amber — 观察/归纳 */
+  .tag-mental-model { background: #ccfbf1; color: #0f766e; }    /* teal — 心智模型 */
   .tag-published { background: var(--primary-light); color: var(--primary-dark); }
   .tag-draft { background: var(--warning-light); color: #b45309; }
   .tag-unpublished { background: var(--info-light); color: #1d4ed8; }
+  .tag-stale { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+  .tag-rebuilding {
+    background: linear-gradient(135deg, #fef3c7, #fed7aa);
+    color: #c2410c; border: 1px solid #fdba74;
+    animation: rebuildPulse 1.8s ease-in-out infinite;
+  }
+  @keyframes rebuildPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(249,115,22,0.3); }
+    50% { box-shadow: 0 0 0 6px rgba(249,115,22,0); }
+  }
   .tag-source-system { background: #e0f2fe; color: #0369a1; }
   .tag-source-manual { background: #f1f5f9; color: #475569; }
+
+  /* Priority indicator — 检索优先级条 */
+  .priority-indicator {
+    display: flex; align-items: center; gap: 6px; padding: 6px 14px;
+    font-size: 12px; color: var(--text-secondary); background: var(--surface);
+    border-radius: 8px; margin-bottom: 14px; border: 1px solid var(--border);
+  }
+  .priority-indicator .pi-label { color: var(--text-muted); flex-shrink: 0; }
+  .priority-indicator .pi-step {
+    padding: 2px 8px; border-radius: 4px; font-weight: 500; font-size: 11.5px;
+  }
+  .pi-step.mental { background: #ccfbf1; color: #0f766e; }
+  .pi-step.obs { background: #fef3c7; color: #b45309; }
+  .pi-step.raw { background: #f1f5f9; color: #475569; }
+  .pi-arrow { color: var(--text-muted); font-size: 11px; }
+
+  /* Consolidation notification banner */
+  .consolidation-banner {
+    display: none; align-items: center; gap: 10px; padding: 12px 16px; margin-bottom: 18px;
+    border-radius: var(--radius); font-size: 13px; font-weight: 500;
+    background: linear-gradient(135deg, #fef3c7, #fef9c3);
+    border: 1px solid #fde68a; color: #92400e;
+    animation: bannerSlideIn 0.4s ease;
+  }
+  .consolidation-banner.show { display: flex; }
+  .consolidation-banner .cons-spinner {
+    width: 18px; height: 18px; border: 2.5px solid #fde68a;
+    border-top-color: #d97706; border-radius: 50%;
+    animation: consSpin 0.7s linear infinite; flex-shrink: 0;
+  }
+  .consolidation-banner.done {
+    background: linear-gradient(135deg, #d1fae5, #ecfdf5);
+    border-color: #a7f3d0; color: #065f46;
+  }
+  .consolidation-banner.done .cons-spinner {
+    border-color: #a7f3d0; border-top-color: transparent;
+    animation: none; border-top-color: #10b981;
+  }
+  @keyframes consSpin { to { transform: rotate(360deg); } }
+  @keyframes bannerSlideIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Stale-row animation — observation turning stale */
+  .stale-flash {
+    animation: staleFlash 0.8s ease-out;
+  }
+  @keyframes staleFlash {
+    0% { background: #fef2f2; box-shadow: inset 4px 0 0 #ef4444; }
+    70% { background: #fef2f2; box-shadow: inset 4px 0 0 #ef4444; }
+    100% { background: transparent; box-shadow: inset 4px 0 0 transparent; }
+  }
+  @keyframes staleFlashIn {
+    from { opacity: 0; background: #d4ede8; }
+    to { opacity: 1; background: transparent; }
+  }
+
+  /* Version history in detail modal */
+  .version-line {
+    display: flex; align-items: center; gap: 10px; padding: 7px 0;
+    font-size: 12.5px; color: var(--text-secondary); border-bottom: 1px solid var(--border-light);
+  }
+  .version-line:last-child { border-bottom: none; }
+  .version-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  }
+  .version-dot.current { background: var(--primary); box-shadow: 0 0 0 4px rgba(16,185,129,0.15); }
+  .version-dot.old { background: var(--border); }
+  .version-dot.stale { background: var(--danger); }
+
+  /* Freshness indicator */
+  .freshness-indicator {
+    display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px;
+    padding: 2px 8px; border-radius: 10px; font-weight: 500;
+  }
+  .freshness-indicator.fresh { background: #d1fae5; color: #065f46; }
+  .freshness-indicator.warning { background: #fef3c7; color: #92400e; }
+  .freshness-indicator.stale { background: #fef2f2; color: #dc2626; }
+  .freshness-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .freshness-indicator.fresh .freshness-dot { background: var(--primary); }
+  .freshness-indicator.warning .freshness-dot { background: var(--warning); }
+  .freshness-indicator.stale .freshness-dot { background: var(--danger); }
 
   /* Action Buttons */
   .action-group { display: flex; gap: 4px; }
@@ -438,7 +538,7 @@
     position: relative;
     width: 100%; height: 540px;
     cursor: grab;
-    background: #eef2f7;
+    background: #fafafa;
     overflow: hidden;
   }
   .kg-canvas-wrap:active { cursor: grabbing; }
@@ -508,6 +608,12 @@
     font-size: 11px; color: #94a3b8;
     font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
   }
+  .kg-tt-hint {
+    font-size: 11px; color: var(--text-muted);
+    margin-top: 5px; padding-top: 5px;
+    border-top: 1px solid var(--border-light);
+    font-style: italic;
+  }
 
   /* Legend */
   .kg-legend {
@@ -523,9 +629,10 @@
     border-radius: 3px;
     flex-shrink: 0;
   }
-  .kg-dot-world { background: #7dbce2; }
-  .kg-dot-exp { background: #b496e2; }
-  .kg-dot-obs { background: #e0c580; }
+  .kg-dot-world { background: #8fa9bf; }
+  .kg-dot-exp { background: #a697c6; }
+  .kg-dot-obs { background: #c4a77e; }
+  .kg-dot-mental { background: #7db89f; }
 
   /* ===== Settings / 记忆管理设置 ===== */
   .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
@@ -711,7 +818,7 @@
       <div class="global-actions-bar">
         <div class="global-search-mini">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" placeholder="搜索全部记忆（world / experience / observation）..." id="global-search-input" onkeyup="if(event.key==='Enter')doGlobalSearch()">
+          <input type="text" placeholder="搜索全部记忆..." id="global-search-input" onkeyup="if(event.key==='Enter')doGlobalSearch()">
         </div>
         <button class="global-action-item" onclick="showToast('数据已刷新', 'success')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10"/><path d="M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
@@ -728,7 +835,8 @@
       <div class="section-tabs">
         <button class="section-tab active hs-only" data-section="graph" data-hs-only="true" onclick="switchSection('graph')">图谱</button>
         <button class="section-tab" data-section="entries" onclick="switchSection('entries')">记忆条目<span class="tab-badge">12</span></button>
-        <button class="section-tab hs-only" data-section="observation" data-hs-only="true" onclick="switchSection('observation')">观察<span class="tab-badge">5</span></button>
+        <button class="section-tab hs-only" data-section="observation" data-hs-only="true" onclick="switchSection('observation')">观察<span class="tab-badge">7</span></button>
+        <button class="section-tab hs-only" data-section="mental" data-hs-only="true" onclick="switchSection('mental')">个人记忆<span class="tab-badge">2</span></button>
         <button class="section-tab" data-section="history" onclick="switchSection('history')">对话历史</button>
         <button class="section-tab" data-section="trash" onclick="switchSection('trash')">回收站<span class="tab-badge">2</span></button>
         <button class="section-tab" data-section="settings" onclick="switchSection('settings')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;margin-right:4px;vertical-align:-2px;"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>设置</button>
@@ -741,7 +849,7 @@
           <div class="kg-header">
             <div class="kg-title-group">
               <span class="kg-title">Hindsight 记忆知识图谱</span>
-              <span class="kg-subtitle">— World / Experience / Observation 关联网络</span>
+              <span class="kg-subtitle">— Mental Model / Observation 关联网络</span>
             </div>
             <div class="kg-toolbar">
               <button class="kg-tool-btn" onclick="resetKGView()">
@@ -766,9 +874,10 @@
           </div>
 
           <div class="kg-legend">
+            <div class="kg-legend-item"><span class="kg-legend-dot kg-dot-mental"></span>Mental Model — 心智模型</div>
+            <div class="kg-legend-item"><span class="kg-legend-dot kg-dot-obs"></span>Observation — 观察/归纳</div>
             <div class="kg-legend-item"><span class="kg-legend-dot kg-dot-world"></span>World — 客观事实</div>
             <div class="kg-legend-item"><span class="kg-legend-dot kg-dot-exp"></span>Experience — 事件/经历</div>
-            <div class="kg-legend-item"><span class="kg-legend-dot kg-dot-obs"></span>Observation — 观察/归纳</div>
             <span style="margin-left:auto;color:#94a3b8;">拖拽平移 | 滚轮缩放 | 悬停查看详情 | 点击展开</span>
           </div>
         </div>
@@ -780,13 +889,15 @@
 
         <!-- Type hint -->
         <div class="type-hint-card">
-          <div class="type-hint-item"><span class="type-hint-dot" style="background:#0369a1;"></span><strong>World</strong> — 客观事实、外部事实、用户相关事实</div>
-          <div class="type-hint-item"><span class="type-hint-dot" style="background:#7c3aed;"></span><strong>Experience</strong> — 事件、经历、对话上下文、时间相关事实</div>
+          <div class="type-hint-item"><span class="type-hint-dot" style="background:#0369a1;"></span><strong>World</strong> — 客观事实（RETAIN 写入）</div>
+          <div class="type-hint-item"><span class="type-hint-dot" style="background:#7c3aed;"></span><strong>Experience</strong> — Agent 交互感知（系统自动捕获）</div>
+
         </div>
 
         <div class="sub-tabs">
-          <button class="sub-tab active" onclick="switchSubTab(this,'world-list')">World</button>
-          <button class="sub-tab" onclick="switchSubTab(this,'exp-list')">Experience</button>
+          <button id="subtab-world" class="sub-tab active" onclick="switchSubTab(this,'world-list')">World</button>
+          <button id="subtab-exp" class="sub-tab" onclick="switchSubTab(this,'exp-list')">Experience</button>
+
         </div>
 
         <!-- World 列表 -->
@@ -796,40 +907,39 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
               <input type="text" placeholder="搜索 world 条目...">
             </div>
-            <button class="btn btn-sm btn-primary hso" onclick="openLocalAddModal('world')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>添加</button>
             <button class="btn btn-sm btn-danger" onclick="showToast('批量删除选中项', 'warning')">批量删除</button>
             <button class="btn btn-sm btn-danger" onclick="confirmAction('确认清空所有 world 条目？')">清空</button>
           </div>
           <table class="data-table">
-            <thead><tr><th style="width:36px;"><input type="checkbox" class="checkbox" onchange="toggleSelectAll(event)"></th><th>ID</th><th>内容摘要</th><th>类型</th><th>来源</th><th>创建时间</th><th style="width:156px;">操作</th></tr></thead>
+            <thead><tr><th style="width:36px;"><input type="checkbox" class="checkbox" onchange="toggleSelectAll(event)"></th><th>ID</th><th>内容摘要</th><th>类型</th><th>关联会话</th><th>创建时间</th><th style="width:156px;">操作</th></tr></thead>
             <tbody>
-              <tr><td><input type="checkbox" class="checkbox row-check"></td><td>#W001</td><td>用户住在无锡</td><td><span class="tag tag-world">world</span></td><td>对话提取</td><td>2026-05-20 10:00</td><td><div class="action-group">
-                <button class="action-btn" title="查看" onclick="viewItem('world','用户住在无锡，江苏省无锡市， timezone Asia/Shanghai')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+              <tr data-row-id="W001"><td><input type="checkbox" class="checkbox row-check"></td><td>#W001</td><td>用户住在无锡</td><td><span class="tag tag-world">world</span></td><td>用户基本资料</td><td>2026-05-20 10:00</td><td><div class="action-group">
+                <button class="action-btn" title="查看" onclick="viewItem('world','用户住在无锡，江苏省无锡市， timezone Asia/Shanghai','用户基本资料','2026-05-20 10:00')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
                 <button class="action-btn hso" title="编辑" onclick="openLocalEditModal('world','W001','用户住在无锡','用户住在无锡，江苏省无锡市， timezone Asia/Shanghai')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
                 <button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
               </div></td></tr>
-              <tr><td><input type="checkbox" class="checkbox row-check"></td><td>#W002</td><td>项目使用 React 技术栈</td><td><span class="tag tag-world">world</span></td><td>GEMINI.md</td><td>2026-05-18 14:30</td><td><div class="action-group">
-                <button class="action-btn" title="查看" onclick="viewItem('world','当前项目前端使用 React 框架，版本 18.x，配合 Tailwind CSS')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+              <tr data-row-id="W002"><td><input type="checkbox" class="checkbox row-check"></td><td>#W002</td><td>项目使用 React 技术栈</td><td><span class="tag tag-world">world</span></td><td>项目技术选型讨论</td><td>2026-05-18 14:30</td><td><div class="action-group">
+                <button class="action-btn" title="查看" onclick="viewItem('world','当前项目前端使用 React 框架，版本 18.x，配合 Tailwind CSS','项目技术选型讨论','2026-05-18 14:30')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
                 <button class="action-btn hso" title="编辑" onclick="openLocalEditModal('world','W002','项目使用 React 技术栈','当前项目前端使用 React 框架，版本 18.x，配合 Tailwind CSS')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
                 <button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
               </div></td></tr>
-              <tr><td><input type="checkbox" class="checkbox row-check"></td><td>#W003</td><td>腾讯产品经理 / 开发人员</td><td><span class="tag tag-world">world</span></td><td>对话提取</td><td>2026-05-15 09:00</td><td><div class="action-group">
-                <button class="action-btn" title="查看" onclick="viewItem('world','用户在腾讯工作，角色为产品经理或开发人员')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+              <tr data-row-id="W003"><td><input type="checkbox" class="checkbox row-check"></td><td>#W003</td><td>腾讯产品经理 / 开发人员</td><td><span class="tag tag-world">world</span></td><td>用户基本资料</td><td>2026-05-15 09:00</td><td><div class="action-group">
+                <button class="action-btn" title="查看" onclick="viewItem('world','用户在腾讯工作，角色为产品经理或开发人员','用户基本资料','2026-05-15 09:00')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
                 <button class="action-btn hso" title="编辑" onclick="openLocalEditModal('world','W003','腾讯产品经理 / 开发人员','用户在腾讯工作，角色为产品经理或开发人员')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
                 <button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
               </div></td></tr>
-              <tr><td><input type="checkbox" class="checkbox row-check"></td><td>#W004</td><td>偏好简体中文交流</td><td><span class="tag tag-world">world</span></td><td>多次对话归纳</td><td>2026-06-01 08:00</td><td><div class="action-group">
-                <button class="action-btn" title="查看" onclick="viewItem('world','用户在所有交互中偏好使用简体中文进行沟通和输出')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+              <tr data-row-id="W004"><td><input type="checkbox" class="checkbox row-check"></td><td>#W004</td><td>偏好简体中文交流</td><td><span class="tag tag-world">world</span></td><td>交互偏好分析</td><td>2026-06-01 08:00</td><td><div class="action-group">
+                <button class="action-btn" title="查看" onclick="viewItem('world','用户在所有交互中偏好使用简体中文进行沟通和输出','交互偏好分析','2026-06-01 08:00')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
                 <button class="action-btn hso" title="编辑" onclick="openLocalEditModal('world','W004','偏好简体中文交流','用户在所有交互中偏好使用简体中文进行沟通和输出')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
                 <button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
               </div></td></tr>
-              <tr><td><input type="checkbox" class="checkbox row-check"></td><td>#W005</td><td>长期关注协作工具市场（Notion/Figma/Miro/飞书）</td><td><span class="tag tag-world">world</span></td><td>对话提取</td><td>2026-05-27 11:00</td><td><div class="action-group">
-                <button class="action-btn" title="查看" onclick="viewItem('world','用户长期关注 AI 协作工具市场动态，主要竞品包括 Notion、Figma、Miro、飞书文档等')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+              <tr data-row-id="W005"><td><input type="checkbox" class="checkbox row-check"></td><td>#W005</td><td>长期关注协作工具市场（Notion/Figma/Miro/飞书）</td><td><span class="tag tag-world">world</span></td><td>竞品趋势分析</td><td>2026-05-27 11:00</td><td><div class="action-group">
+                <button class="action-btn" title="查看" onclick="viewItem('world','用户长期关注 AI 协作工具市场动态，主要竞品包括 Notion、Figma、Miro、飞书文档等','竞品趋势分析','2026-05-27 11:00')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
                 <button class="action-btn hso" title="编辑" onclick="openLocalEditModal('world','W005','长期关注协作工具市场（Notion/Figma/Miro/飞书）','用户长期关注 AI 协作工具市场动态，主要竞品包括 Notion、Figma、Miro、飞书文档等')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
                 <button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
               </div></td></tr>
-              <tr><td><input type="checkbox" class="checkbox row-check"></td><td>#W006</td><td>偏好绿色作为主题色</td><td><span class="tag tag-world">world</span></td><td>对话提取</td><td>2026-05-28 20:45</td><td><div class="action-group">
-                <button class="action-btn" title="查看" onclick="viewItem('world','用户偏好使用绿色系配色方案作为应用主题色')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+              <tr data-row-id="W006"><td><input type="checkbox" class="checkbox row-check"></td><td>#W006</td><td>偏好绿色作为主题色</td><td><span class="tag tag-world">world</span></td><td>交互偏好分析</td><td>2026-05-28 20:45</td><td><div class="action-group">
+                <button class="action-btn" title="查看" onclick="viewItem('world','用户偏好使用绿色系配色方案作为应用主题色','交互偏好分析','2026-05-28 20:45')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
                 <button class="action-btn hso" title="编辑" onclick="openLocalEditModal('world','W006','偏好绿色作为主题色','用户偏好使用绿色系配色方案作为应用主题色')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
                 <button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
               </div></td></tr>
@@ -850,35 +960,34 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
               <input type="text" placeholder="搜索 experience 条目...">
             </div>
-            <button class="btn btn-sm btn-primary hso" onclick="openLocalAddModal('experience')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>添加</button>
             <button class="btn btn-sm btn-danger" onclick="showToast('批量删除选中项', 'warning')">批量删除</button>
             <button class="btn btn-sm btn-danger" onclick="confirmAction('确认清空所有 experience 条目？')">清空</button>
           </div>
           <table class="data-table">
             <thead><tr><th style="width:36px;"><input type="checkbox" class="checkbox" onchange="toggleSelectAll(event)"></th><th>ID</th><th>内容摘要</th><th>类型</th><th>关联会话</th><th>创建时间</th><th style="width:156px;">操作</th></tr></thead>
             <tbody>
-              <tr><td><input type="checkbox" class="checkbox row-check"></td><td>#E001</td><td>用户在某次对话中默认使用 Hindsight 进行记忆管理</td><td><span class="tag tag-experience">experience</span></td><td>白板原型讨论</td><td>2026-06-02 15:30</td><td><div class="action-group">
-                <button class="action-btn" title="查看" onclick="viewItem('experience','用户在白板原型的功能讨论对话中，主动选择使用 Hindsight 作为记忆管理方案，表明对系统化记忆管理的认可')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+              <tr data-row-id="E001"><td><input type="checkbox" class="checkbox row-check"></td><td>#E001</td><td>用户在某次对话中默认使用 Hindsight 进行记忆管理</td><td><span class="tag tag-experience">experience</span></td><td>白板原型讨论</td><td>2026-06-02 15:30</td><td><div class="action-group">
+                <button class="action-btn" title="查看" onclick="viewItem('experience','用户在白板原型的功能讨论对话中，主动选择使用 Hindsight 作为记忆管理方案，表明对系统化记忆管理的认可','白板原型讨论','2026-06-02 15:30')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
                 <button class="action-btn hso" title="编辑" onclick="openLocalEditModal('experience','E001','用户在某次对话中默认使用 Hindsight 进行记忆管理','用户在白板原型的功能讨论对话中，主动选择使用 Hindsight 作为记忆管理方案')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
                 <button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
               </div></td></tr>
-              <tr><td><input type="checkbox" class="checkbox row-check"></td><td>#E002</td><td>工作中偏好使用深色模式编辑器</td><td><span class="tag tag-experience">experience</span></td><td>UI 设计确认</td><td>2026-06-01 09:12</td><td><div class="action-group">
-                <button class="action-btn" title="查看" onclick="viewItem('experience','在 UI 设计风格确认的对话中，用户明确表示工作中偏好使用深色模式的代码编辑器')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+              <tr data-row-id="E002"><td><input type="checkbox" class="checkbox row-check"></td><td>#E002</td><td>工作中偏好使用深色模式编辑器</td><td><span class="tag tag-experience">experience</span></td><td>UI 设计确认</td><td>2026-06-01 09:12</td><td><div class="action-group">
+                <button class="action-btn" title="查看" onclick="viewItem('experience','在 UI 设计风格确认的对话中，用户明确表示工作中偏好使用深色模式的代码编辑器','UI 设计确认','2026-06-01 09:12')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
                 <button class="action-btn hso" title="编辑" onclick="openLocalEditModal('experience','E002','工作中偏好使用深色模式编辑器','在 UI 设计风格确认的对话中，用户明确表示工作中偏好使用深色模式的代码编辑器')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
                 <button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
               </div></td></tr>
-              <tr><td><input type="checkbox" class="checkbox row-check"></td><td>#E003</td><td>提出定时任务需求：下午 4 点财经新闻 + 下午 6 点趋势总结</td><td><span class="tag tag-experience">experience</span></td><td>定时任务规划</td><td>2026-06-03 08:00</td><td><div class="action-group">
-                <button class="action-btn" title="查看" onclick="viewItem('experience','用户在定时任务规划中提出：每天下午 4 点自动查询当日财经新闻，下午 6 点总结行业趋势和竞品动态')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+              <tr data-row-id="E003"><td><input type="checkbox" class="checkbox row-check"></td><td>#E003</td><td>提出定时任务需求：下午 4 点财经新闻 + 下午 6 点趋势总结</td><td><span class="tag tag-experience">experience</span></td><td>定时任务规划</td><td>2026-06-03 08:00</td><td><div class="action-group">
+                <button class="action-btn" title="查看" onclick="viewItem('experience','用户在定时任务规划中提出：每天下午 4 点自动查询当日财经新闻，下午 6 点总结行业趋势和竞品动态','定时任务规划','2026-06-03 08:00')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
                 <button class="action-btn hso" title="编辑" onclick="openLocalEditModal('experience','E003','提出定时任务需求','用户在定时任务规划中提出：每天下午 4 点自动查询当日财经新闻，下午 6 点总结行业趋势和竞品动态')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
                 <button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
               </div></td></tr>
-              <tr><td><input type="checkbox" class="checkbox row-check"></td><td>#E004</td><td>启动 metalm_v3 网页及类 Miro 白板原型开发</td><td><span class="tag tag-experience">experience</span></td><td>项目初始化</td><td>2026-05-30 09:33</td><td><div class="action-group">
-                <button class="action-btn" title="查看" onclick="viewItem('experience','用户启动了 metalm_v3 项目开发，目标是实现包含无限画布、便签、画笔、连线等功能的类 Miro 协作白板原型')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+              <tr data-row-id="E004"><td><input type="checkbox" class="checkbox row-check"></td><td>#E004</td><td>启动 metalm_v3 网页及类 Miro 白板原型开发</td><td><span class="tag tag-experience">experience</span></td><td>项目初始化</td><td>2026-05-30 09:33</td><td><div class="action-group">
+                <button class="action-btn" title="查看" onclick="viewItem('experience','用户启动了 metalm_v3 项目开发，目标是实现包含无限画布、便签、画笔、连线等功能的类 Miro 协作白板原型','项目初始化','2026-05-30 09:33')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
                 <button class="action-btn hso" title="编辑" onclick="openLocalEditModal('experience','E004','启动 metalm_v3 网页及类 Miro 白板原型开发','用户启动了 metalm_v3 项目开发，目标是实现无限画布、便签、画笔、连线等功能的白板原型')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
                 <button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
               </div></td></tr>
-              <tr><td><input type="checkbox" class="checkbox row-check"></td><td>#E005</td><td>要求逐步迭代修改，每次针对一个具体问题调整</td><td><span class="tag tag-experience">experience</span></td><td>UI 设计确认</td><td>2026-06-01 14:10</td><td><div class="action-group">
-                <button class="action-btn" title="查看" onclick="viewItem('experience','在设计交互原型的过程中，用户强调采用增量迭代方式，每次只聚焦一个具体问题进行调整')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+              <tr data-row-id="E005"><td><input type="checkbox" class="checkbox row-check"></td><td>#E005</td><td>要求逐步迭代修改，每次针对一个具体问题调整</td><td><span class="tag tag-experience">experience</span></td><td>UI 设计确认</td><td>2026-06-01 14:10</td><td><div class="action-group">
+                <button class="action-btn" title="查看" onclick="viewItem('experience','在设计交互原型的过程中，用户强调采用增量迭代方式，每次只聚焦一个具体问题进行调整','UI 设计确认','2026-06-01 14:10')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
                 <button class="action-btn hso" title="编辑" onclick="openLocalEditModal('experience','E005','要求逐步迭代修改','在设计交互原型的过程中，用户强调采用增量迭代方式，每次只聚焦一个具体问题进行调整')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
                 <button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
               </div></td></tr>
@@ -895,82 +1004,133 @@
       <!-- ========== Section 2: 观察 (Observation) ========== -->
       <div id="panel-observation" class="section-panel">
 
+        <!-- Consolidation notification banner -->
+        <div id="consolidation-banner" class="consolidation-banner">
+          <div class="cons-spinner"></div>
+          <div class="cons-text">Consolidation 进行中 — 正在根据底层事实变更重建 observation ...</div>
+        </div>
+
         <!-- Type hint -->
         <div class="type-hint-card">
-          <div class="type-hint-item"><span class="type-hint-dot" style="background:#0369a1;"></span><strong>系统归纳</strong> — 从多条 world/experience 自动推导的高层模式</div>
-          <div class="type-hint-item"><span class="type-hint-dot" style="background:#475569;"></span><strong>手动创建</strong> — 用户自行添加的行为偏好或任务规则</div>
+          <div class="type-hint-item"><span class="type-hint-dot" style="background:#b45309;"></span><strong>系统归纳</strong> — 从多条 world/experience 自动推导的高层模式（只读，由 consolidation 自动管理）</div>
         </div>
 
         <div class="status-tabs">
-          <button class="status-tab active" onclick="switchStatusTab(this,'obs-published')">已发布<span class="status-count">(2)</span></button>
-          <button class="status-tab" onclick="switchStatusTab(this,'obs-draft')">草稿<span class="status-count">(2)</span></button>
-          <button class="status-tab" onclick="switchStatusTab(this,'obs-unpublished')">未发布<span class="status-count">(1)</span></button>
+          <button class="status-tab active" onclick="switchStatusTab(this,'obs-published')">已发布<span class="status-count">(7)</span></button>
+          <button class="status-tab" id="tab-obs-stale" onclick="switchStatusTab(this,'obs-stale')">待重建<span class="status-count">(2)</span></button>
         </div>
 
         <div id="obs-published" class="status-panel">
           <div class="toolbar-row">
             <div class="search-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="搜索已发布的观察..."></div>
-            <button class="btn btn-primary" onclick="openModal('add-obs-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>添加</button>
+            <button class="btn btn-sm btn-danger" onclick="showToast('批量删除选中项', 'warning')">批量删除</button>
           </div>
           <table class="data-table">
-            <thead><tr><th style="width:36px;"><input type="checkbox" class="checkbox"></th><th>标题</th><th>归纳依据</th><th>来源</th><th>状态</th><th>更新时间</th><th style="width:170px;">操作</th></tr></thead>
+            <thead><tr><th style="width:36px;"><input type="checkbox" class="checkbox"></th><th>标题</th><th>归纳依据</th><th>更新时间</th><th style="width:80px;">操作</th></tr></thead>
             <tbody>
-              <tr><td><input type="checkbox" class="checkbox row-check"></td><td>偏好简体中文回答</td><td>源自 3 条 world + 2 条 experience</td><td><span class="tag tag-source-system">系统归纳</span></td><td><span class="tag tag-published">已发布</span></td><td>2026-06-03 10:00</td><td><div class="action-group">
-                <button class="action-btn" title="查看" onclick="viewItem('observation','偏好简体中文回答：基于 #W004（偏好简体中文交流）、#E001（默认使用 Hindsight）、#E005（逐步迭代修改）等 3 条 world + 2 条 experience 归纳得出。用户在所有交互中始终使用简体中文进行输出，这是稳定的行为模式。')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-                <button class="action-btn" title="编辑" onclick="openModal('edit-obs-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-                <button class="action-btn" title="变更为草稿" onclick="changeStatus(this,'草稿')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+              <tr data-row-id="O1"><td><input type="checkbox" class="checkbox row-check"></td><td>偏好简体中文回答</td><td>W004, E001, E005</td><td style="font-size:12px;color:var(--text-muted);white-space:nowrap;">2026-06-03 10:00</td><td><div class="action-group">
+                <button class="action-btn" title="查看" onclick="viewItem('observation','偏好简体中文回答——基于 #W004(偏好简体中文)、#E001(默认使用Hindsight)、#E005(逐步迭代)归纳。用户在所有交互中始终使用简体中文输出，稳定的行为模式。')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
                 <button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
               </div></td></tr>
-              <tr><td><input type="checkbox" class="checkbox row-check"></td><td>长期关注 skill 调用稳定性</td><td>源自 4 条 experience</td><td><span class="tag tag-source-system">系统归纳</span></td><td><span class="tag tag-published">已发布</span></td><td>2026-06-02 14:20</td><td><div class="action-group">
-                <button class="action-btn" title="查看" onclick="viewItem('observation','长期关注 skill 调用稳定性：基于 #E001-#E005 共 4 条 experience 归纳得出。用户在多轮对话中反复询问和验证 skill 的调用状态，表明对系统可靠性有较高要求。')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-                <button class="action-btn" title="编辑" onclick="openModal('edit-obs-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-                <button class="action-btn" title="变更为草稿" onclick="changeStatus(this,'草稿')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+              <tr data-row-id="O2"><td><input type="checkbox" class="checkbox row-check"></td><td>长期关注 skill 调用稳定性</td><td>E001, E002, E003, E004</td><td style="font-size:12px;color:var(--text-muted);white-space:nowrap;">2026-06-02 14:20</td><td><div class="action-group">
+                <button class="action-btn" title="查看" onclick="viewItem('observation','长期关注skill调用稳定性——基于E001-E004归纳。用户多轮对话中反复验证skill调用状态，对系统可靠性有较高要求。')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                <button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+              </div></td></tr>
+              <tr data-row-id="O4"><td><input type="checkbox" class="checkbox row-check"></td><td>定时任务：下午6点趋势总结</td><td>E003</td><td style="font-size:12px;color:var(--text-muted);white-space:nowrap;">2026-06-03 09:31</td><td><div class="action-group">
+                <button class="action-btn" title="查看" onclick="viewItem('observation','定时任务(下午6点趋势总结)——基于E003归纳。用户希望每天下午6点自动总结行业趋势和竞品动态(Notion/Figma/Miro/飞书)。')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                <button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+              </div></td></tr>
+              <tr data-row-id="O6"><td><input type="checkbox" class="checkbox row-check"></td><td>AI-first 产品方向判断</td><td>O1, O2</td><td style="font-size:12px;color:var(--text-muted);white-space:nowrap;">2026-06-03 18:00</td><td><div class="action-group">
+                <button class="action-btn" title="查看" onclick="viewItem('observation','基于 O1(简体中文偏好)+O2(Skill稳定性关注) 二次归纳：用户技术栈(React+Tailwind)结合对协作工具市场持续关注，推断适合 AI-first 产品方向。')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                <button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+              </div></td></tr>
+              <tr data-row-id="O7"><td><input type="checkbox" class="checkbox row-check"></td><td>自动化工作流偏好</td><td>O3, O4</td><td style="font-size:12px;color:var(--text-muted);white-space:nowrap;">2026-06-04 08:00</td><td><div class="action-group">
+                <button class="action-btn" title="查看" onclick="viewItem('observation','基于 O3(下午4点财经新闻)+O4(下午6点趋势总结) 二次归纳：用户高度偏好通过自动化技术减少重复劳动，定时任务习惯结合增量迭代开发模式佐证。')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
                 <button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
               </div></td></tr>
             </tbody>
           </table>
         </div>
 
-        <div id="obs-draft" class="status-panel" style="display:none;">
+        <div id="obs-stale" class="status-panel" style="display:none;">
           <div class="toolbar-row">
-            <div class="search-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="搜索草稿..."></div>
-            <button class="btn btn-primary" onclick="openModal('add-obs-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>添加</button>
+            <div class="search-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="搜索待重建的观察..."></div>
+            <button class="btn btn-warning" onclick="triggerRebuildAll()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>一键重建全部</button>
+          </div>
+          <div style="margin-bottom:14px;padding:10px 14px;background:var(--warning-light);border:1px solid #fde68a;border-radius:var(--radius-sm);font-size:12.5px;color:#92400e;display:flex;align-items:center;gap:8px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01  y2="17"/></svg>
+            以下 observation 因底层事实变更而失效，等待系统 consolidation 重建
           </div>
           <table class="data-table">
-            <thead><tr><th style="width:36px;"><input type="checkbox" class="checkbox"></th><th>标题</th><th>归纳依据</th><th>来源</th><th>状态</th><th>更新时间</th><th style="width:170px;">操作</th></tr></thead>
-            <tbody>
-              <tr><td><input type="checkbox" class="checkbox row-check"></td><td>定时任务：下午4点财经新闻</td><td>源自 #E003</td><td><span class="tag tag-source-system">系统归纳</span></td><td><span class="tag tag-draft">草稿</span></td><td>2026-06-03 09:30</td><td><div class="action-group">
-                <button class="action-btn" title="查看" onclick="viewItem('observation','定时任务：下午4点财经新闻 — 基于 #E003（用户提出定时任务需求）归纳。用户希望每天下午4点自动查询当日财经新闻，通过自动化手段减少手动信息检索的工作量。当前为草稿状态，待发布。')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-                <button class="action-btn" title="编辑" onclick="openModal('edit-obs-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-                <button class="action-btn" title="发布" onclick="changeStatus(this,'已发布')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></button>
-                <button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
-              </div></td></tr>
-              <tr><td><input type="checkbox" class="checkbox row-check"></td><td>定时任务：下午6点趋势总结</td><td>手动录入</td><td><span class="tag tag-source-manual">手动创建</span></td><td><span class="tag tag-draft">草稿</span></td><td>2026-06-03 09:31</td><td><div class="action-group">
-                <button class="action-btn" title="查看" onclick="viewItem('observation','定时任务：下午6点趋势总结 — 基于 #E003 归纳。用户希望每天下午6点自动总结行业趋势和竞品动态（Notion/Figma/Miro/飞书）。当前为草稿状态，待发布。')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-                <button class="action-btn" title="编辑" onclick="openModal('edit-obs-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-                <button class="action-btn" title="发布" onclick="changeStatus(this,'已发布')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></button>
-                <button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
-              </div></td></tr>
+            <thead><tr><th style="width:36px;"><input type="checkbox" class="checkbox"></th><th>标题</th><th>失效原因</th><th>源事实变更</th><th>失效时间</th><th style="width:170px;">操作</th></tr></thead>
+            <tbody id="stale-obs-tbody">
+              <tr data-row-id="O3">
+                <td><input type="checkbox" class="checkbox row-check"></td>
+                <td><strong>定时任务：下午4点财经新闻</strong></td>
+                <td><span style="font-size:12px;color:var(--danger);">底层事实全部删除，无有效归纳来源</span></td>
+                <td><code style="background:#fef2f2;padding:1px 5px;border-radius:3px;color:var(--danger);">E003 已被删除</code></td>
+                <td style="font-size:12px;color:var(--text-muted);white-space:nowrap;">2026-06-04 10:35</td>
+                <td><div class="action-group">
+                  <button class="btn btn-sm btn-warning" onclick="showObsRestoreDialog('O3')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>恢复
+                  </button>
+                  <button class="btn btn-sm btn-danger" onclick="deleteRow(this)">删除</button>
+                </div></td>
+              </tr>
+              <tr data-row-id="O5">
+                <td><input type="checkbox" class="checkbox row-check"></td>
+                <td><strong>竞品关注：飞书文档更新动态</strong></td>
+                <td><span style="font-size:12px;color:var(--danger);">底层事实全部删除，无有效归纳来源</span></td>
+                <td><code style="background:#fef2f2;padding:1px 5px;border-radius:3px;color:var(--danger);">W005 已被删除</code></td>
+                <td style="font-size:12px;color:var(--text-muted);white-space:nowrap;">2026-06-04 09:15</td>
+                <td><div class="action-group">
+                  <button class="btn btn-sm btn-warning" onclick="showObsRestoreDialog('O5')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>恢复
+                  </button>
+                  <button class="btn btn-sm btn-danger" onclick="deleteRow(this)">删除</button>
+                </div></td>
+              </tr>
             </tbody>
           </table>
+          <div style="text-align:center;padding:30px;color:var(--text-muted);display:none;" id="stale-empty">— 暂无待重建条目 —</div>
         </div>
 
-        <div id="obs-unpublished" class="status-panel" style="display:none;">
-          <div class="toolbar-row">
-            <div class="search-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="搜索未发布..."></div>
-            <button class="btn btn-primary" onclick="openModal('add-obs-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>添加</button>
+      </div>
+
+      <!-- ========== Section 2.5: 个人记忆（心智模型） ========== -->
+      <div id="panel-mental" class="section-panel">
+        <div class="section-header">个人记忆</div>
+        <div class="priority-indicator">
+          <span class="pi-label">检索优先级</span>
+          <span class="pi-step mental">个人记忆</span><span class="pi-arrow">→</span>
+          <span class="pi-step obs">观察</span><span class="pi-arrow">→</span>
+          <span class="pi-step raw">原始事实</span>
+        </div>
+        <div class="toolbar-row">
+          <div class="search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" placeholder="搜索心智模型...">
           </div>
-          <table class="data-table">
-            <thead><tr><th style="width:36px;"><input type="checkbox" class="checkbox"></th><th>标题</th><th>归纳依据</th><th>来源</th><th>状态</th><th>更新时间</th><th style="width:170px;">操作</th></tr></thead>
-            <tbody>
-              <tr><td><input type="checkbox" class="checkbox row-check"></td><td>竞品关注：飞书文档更新动态</td><td>手动录入</td><td><span class="tag tag-source-manual">手动创建</span></td><td><span class="tag tag-unpublished">未发布</span></td><td>2026-06-01 16:40</td><td><div class="action-group">
-                <button class="action-btn" title="查看" onclick="viewItem('observation','竞品关注：飞书文档更新动态 — 基于 #W005（长期关注协作工具市场）及多条 experience 归纳。用户持续追踪飞书等竞品的功能迭代，尤其关注协作工具的 AI 能力演进。当前为未发布状态。')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-                <button class="action-btn" title="编辑" onclick="openModal('edit-obs-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-                <button class="action-btn" title="发布" onclick="changeStatus(this,'已发布')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></button>
-                <button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
-              </div></td></tr>
-            </tbody>
-          </table>
+          <button class="btn btn-sm btn-primary" onclick="openManualAdd()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>添加</button>
+          <button class="btn btn-sm btn-danger" onclick="showToast('批量删除选中项', 'warning')">批量删除</button>
+        </div>
+        <table class="data-table">
+          <thead><tr><th style="width:36px;"><input type="checkbox" class="checkbox" onchange="toggleSelectAll(event)"></th><th>ID</th><th>标题</th><th>内容摘要</th><th>来源</th><th>创建时间</th><th style="width:156px;">操作</th></tr></thead>
+          <tbody>
+            <tr data-row-id="M1"><td><input type="checkbox" class="checkbox row-check"></td><td>#M1</td><td>团队沟通最佳实践</td><td>在项目讨论中使用简体中文、保持上下文关联、每次聚焦单一问题，提升协作效率</td><td><span style="color:var(--text-muted);font-size:12px;">用户手动创建</span></td><td>2026-06-03 14:00</td><td><div class="action-group">
+              <button class="action-btn" title="查看" onclick="viewItem('mental-model','在项目讨论中使用简体中文、保持上下文关联、每次聚焦单一问题，提升协作效率','','','团队沟通最佳实践')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+              <button class="action-btn" title="编辑" onclick="openLocalEditModal('mental','M1','团队沟通最佳实践','在项目讨论中使用简体中文、保持上下文关联、每次聚焦单一问题')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+            </div></td></tr>
+            <tr data-row-id="M2"><td><input type="checkbox" class="checkbox row-check"></td><td>#M2</td><td>项目风险评估框架</td><td>定时关注行业趋势和竞品动态，识别外部风险对项目的影响</td><td><span style="color:var(--text-muted);font-size:12px;">用户手动创建</span></td><td>2026-06-03 16:00</td><td><div class="action-group">
+              <button class="action-btn" title="查看" onclick="viewItem('mental-model','定时关注行业趋势和竞品动态，识别外部风险对项目的影响','','','项目风险评估框架')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+              <button class="action-btn" title="编辑" onclick="openLocalEditModal('mental','M2','项目风险评估框架','定时关注行业趋势和竞品动态，识别外部风险')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+            </div></td></tr>
+          </tbody>
+        </table>
+        <div style="padding:12px;background:var(--surface);border-radius:6px;margin-top:12px;font-size:12px;color:var(--text-muted);">
+          心智模型由你主动创建和维护，用于为 Agent 提供稳定的认知框架。与自动生成的观察不同，心智模型是四层记忆中优先级最高的。
         </div>
       </div>
 
@@ -1005,24 +1165,65 @@
       <!-- ========== Section 4: 回收站 ========== -->
       <div id="panel-trash" class="section-panel">
         <div class="toolbar-row">
-          <div class="search-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="搜索已删除的记忆..."></div>
-          <button class="btn btn-danger" onclick="confirmAction('确定彻底清空回收站？此操作不可撤销！')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>彻底清空</button>
+          <div class="search-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="搜索删除事务..."></div>
+          <button class="btn btn-danger" onclick="confirmAction('确定彻底清空回收站？所有事务将被永久删除，不可恢复！')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>彻底清空</button>
         </div>
-        <div class="card">
-          <div class="card-body" style="padding:0;">
-            <table class="data-table">
-              <thead><tr><th style="width:36px;"><input type="checkbox" class="checkbox"></th><th>类型</th><th>内容</th><th>删除时间</th><th style="width:160px;">操作</th></tr></thead>
-              <tbody>
-                <tr><td><input type="checkbox" class="checkbox row-check"></td><td><span class="tag tag-experience">experience</span></td><td>旧的测试条目（已废弃）</td><td style="font-size:12px;color:var(--text-muted);">2026-05-29 18:00</td><td><div class="action-group">
-                  <button class="btn btn-sm btn-primary" onclick="restoreItem(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 103.46-12.13L1 10"/>恢复</button>
-                  <button class="btn btn-sm btn-danger" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>彻底删除</button></div></td></tr>
-                <tr><td><input type="checkbox" class="checkbox row-check"></td><td><span class="tag tag-world">world</span></td><td>重复条目：用户住在无锡（合并后冗余）</td><td style="font-size:12px;color:var(--text-muted);">2026-05-28 11:22</td><td><div class="action-group">
-                  <button class="btn btn-sm btn-primary" onclick="restoreItem(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 103.46-12.13L1 10"/>恢复</button>
-                  <button class="btn btn-sm btn-danger" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>彻底删除</button></div></td></tr>
-              </tbody>
-            </table>
+
+        <!-- 删除事务 #TX001 -->
+        <div class="card" style="margin-bottom:16px;" data-tx-id="TX001" data-entry-id="E_TEST_OLD" data-entry-type="experience">
+          <div class="card-header">
+            <span class="card-title" style="font-size:13px;display:flex;align-items:center;gap:8px;">
+              <span style="color:var(--text-muted);font-size:11px;font-family:monospace;">#TX001</span>
+              2026-05-29 18:00
+              <span class="tag tag-experience" style="font-size:10.5px;">experience</span>
+            </span>
+          </div>
+          <div class="card-body" style="padding:14px 20px;">
+            <div style="display:flex;align-items:flex-start;gap:16px;">
+              <div style="flex:1;">
+                <div style="font-weight:600;font-size:13px;margin-bottom:6px;">主条目</div>
+                <div style="font-size:12.5px;color:var(--text-secondary);margin-bottom:4px;">旧的测试条目（已废弃）</div>
+                <div style="display:flex;align-items:center;gap:10px;font-size:11.5px;color:var(--text-muted);">
+                  <span>状态：<span style="color:var(--primary);font-weight:500;">可完整恢复</span></span>
+                  <span>连带影响：<span style="color:var(--text-muted);">—</span></span>
+                </div>
+              </div>
+              <div style="display:flex;gap:6px;flex-shrink:0;">
+                <button class="btn btn-sm btn-primary" onclick="restoreTrashTransaction('TX001')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 103.46-12.13L1 10"/>完整恢复</button>
+                <button class="btn btn-sm btn-danger" onclick="permanentlyDeleteTransaction(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>永久删除</button>
+              </div>
+            </div>
           </div>
         </div>
+
+        <!-- 删除事务 #TX002 -->
+        <div class="card" style="margin-bottom:16px;" data-tx-id="TX002" data-entry-id="W_DUP_WUXI" data-entry-type="world">
+          <div class="card-header">
+            <span class="card-title" style="font-size:13px;display:flex;align-items:center;gap:8px;">
+              <span style="color:var(--text-muted);font-size:11px;font-family:monospace;">#TX002</span>
+              2026-05-28 11:22
+              <span class="tag tag-world" style="font-size:10.5px;">world</span>
+            </span>
+          </div>
+          <div class="card-body" style="padding:14px 20px;">
+            <div style="display:flex;align-items:flex-start;gap:16px;">
+              <div style="flex:1;">
+                <div style="font-weight:600;font-size:13px;margin-bottom:6px;">主条目</div>
+                <div style="font-size:12.5px;color:var(--text-secondary);margin-bottom:4px;">重复条目：用户住在无锡（合并后冗余）</div>
+                <div style="display:flex;align-items:center;gap:10px;font-size:11.5px;color:var(--text-muted);">
+                  <span>状态：<span style="color:var(--primary);font-weight:500;">可完整恢复</span></span>
+                  <span>影响：<span style="color:var(--warning);">1 条 observation 置信度下降</span></span>
+                </div>
+              </div>
+              <div style="display:flex;gap:6px;flex-shrink:0;">
+                <button class="btn btn-sm btn-primary" onclick="restoreTrashTransaction('TX002')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 103.46-12.13L1 10"/>完整恢复</button>
+                <button class="btn btn-sm" onclick="restoreTrashPrimaryOnly('TX002')" style="font-size:11.5px;">仅恢复主条目</button>
+                <button class="btn btn-sm btn-danger" onclick="permanentlyDeleteTransaction(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>永久删除</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <!-- ========== Section 5: 设置 ========== -->
@@ -1252,7 +1453,10 @@
     <div class="modal-body">
       <div class="form-group"><label class="form-label">类型</label><div id="vd-type" style="font-size:13.5px;"></div></div>
       <div class="form-group"><label class="form-label">内容</label><div id="vd-content" class="memory-preview" style="min-height:auto;"></div></div>
+      <div class="form-group" id="vd-session-group" style="display:none;"><label class="form-label" style="margin-bottom:8px;">会话信息</label><div id="vd-session-info" style="font-size:13px;color:var(--text-primary);line-height:1.7;"></div></div>
       <div class="form-group" id="vd-sources-group"><label class="form-label" style="margin-bottom:8px;">归纳依据</label><div id="vd-sources"></div></div>
+      <div class="form-group" id="vd-freshness-group" style="display:none;"><label class="form-label" style="margin-bottom:8px;">依赖事实新鲜度</label><div id="vd-freshness"></div></div>
+      <div class="form-group" id="vd-version-group" style="display:none;"><label class="form-label" style="margin-bottom:8px;">版本历史</label><div id="vd-versions"></div></div>
       <div class="form-group"><label class="form-label">元信息</label><div id="vd-meta" style="font-size:12.5px;color:var(--text-secondary)"></div></div>
     </div>
     <div class="modal-footer"><button class="btn" onclick="closeModal('view-detail-modal')">关闭</button></div>
@@ -1294,6 +1498,42 @@
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('confirm-dialog')">取消</button>
       <button class="btn btn-danger" onclick="closeModal('confirm-dialog');showToast('操作已完成','success')">确认执行</button>
+    </div>
+  </div>
+</div>
+
+<!-- 级联删除确认对话框 -->
+<div class="modal-overlay" id="cascade-dialog">
+  <div class="modal" style="width:560px;">
+    <div class="modal-header" style="background:var(--warning-light);">
+      <span class="modal-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;vertical-align:-3px;margin-right:5px;color:var(--warning);"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>级联影响确认</span>
+      <button class="modal-close" onclick="closeCascadeDialog()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body" style="padding:20px 22px;" id="cascade-dialog-body">
+    </div>
+  </div>
+</div>
+
+<!-- 冲突处理对话框 -->
+<div class="modal-overlay" id="conflict-resolve-modal">
+  <div class="modal" style="width:520px;">
+    <div class="modal-header" style="background:#fef2f2;">
+      <span class="modal-title"><svg viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" style="width:18px;height:18px;vertical-align:-3px;margin-right:5px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>恢复冲突</span>
+      <button class="modal-close" onclick="closeModal('conflict-resolve-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body" style="padding:20px 22px;" id="conflict-resolve-body">
+    </div>
+  </div>
+</div>
+
+<!-- 恢复依赖状态对话框 -->
+<div class="modal-overlay" id="restore-deps-dialog">
+  <div class="modal" style="width:560px;">
+    <div class="modal-header" style="background:#f0f9ff;">
+      <span class="modal-title"><svg viewBox="0 0 24 24" fill="none" stroke="#0369a1" stroke-width="2" style="width:18px;height:18px;vertical-align:-3px;margin-right:5px;"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>恢复 Observation — 依赖节点状态</span>
+      <button class="modal-close" onclick="closeModal('restore-deps-dialog')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body" style="padding:20px 22px;max-height:60vh;overflow-y:auto;" id="restore-deps-body">
     </div>
   </div>
 </div>
@@ -1382,20 +1622,587 @@ function toggleSelectAll(e) {
 }
 function deleteRow(btn) {
   const tr = btn.closest('tr');
-  if (tr && confirm('确认删除这条记录？')) {
-    tr.style.opacity = '0'; tr.style.transition = 'opacity 0.2s';
-    setTimeout(() => tr.remove(), 200);
-    showToast('已删除', 'error');
+  if (!tr) return;
+  const rowId = tr.getAttribute('data-row-id') || '';
+  const rowType = detectRowType(tr);
+
+  if (rowType === 'world' || rowType === 'experience') {
+    // 检查级联影响 — 始终弹出确认对话框
+    var affected = findAffectedObservations(rowId, rowType);
+    showCascadeConfirm(rowId, rowType, affected, tr);
+  } else if (rowType === 'observation' || rowType === 'mental-model') {
+    // Observation / Mental-model: 直接删除，不影响 world/experience
+    doDeleteRow(tr, rowId, rowType);
+  } else {
+    showToast('不支持的条目类型', 'warning');
   }
 }
+
+function detectRowType(tr) {
+  const tag = tr.querySelector('.tag');
+  if (!tag) return '';
+  if (tag.classList.contains('tag-world')) return 'world';
+  if (tag.classList.contains('tag-experience')) return 'experience';
+  if (tag.classList.contains('tag-observation')) return 'observation';
+  if (tag.classList.contains('tag-mental-model')) return 'mental-model';
+  // For observation table — check the first cell with tag (published/draft/unpublished/stale)
+  const firstTag = tr.querySelector('td .tag');
+  if (firstTag) {
+    if (firstTag.classList.contains('tag-published') || firstTag.classList.contains('tag-draft') || firstTag.classList.contains('tag-unpublished') || firstTag.classList.contains('tag-stale')) return 'observation';
+    if (firstTag.classList.contains('tag-mental-model')) return 'mental-model';
+  }
+  // For mental-model panel — check tag in tbody
+  if (tr.closest('#panel-mental')) {
+    var mentalTag = tr.querySelector('.tag-mental-model');
+    if (mentalTag) return 'mental-model';
+  }
+  return '';
+}
+
+// ===== Observation dependency graph =====
+// Maps which observation depends on which world/experience facts
+var obsDeps = {
+  'O1': { sources: ['W004', 'E001', 'E005'], title: '偏好简体中文回答' },
+  'O2': { sources: ['E001', 'E002', 'E003', 'E004'], title: '长期关注 skill 调用稳定性' },
+  'O3': { sources: [], title: '定时任务：下午4点财经新闻' },
+  'O4': { sources: ['E003'], title: '定时任务：下午6点趋势总结' },
+  'O5': { sources: [], title: '竞品关注：飞书文档更新动态' },
+  'O6': { sources: ['O1', 'O2'], title: 'AI-first 产品方向判断' },
+  'O7': { sources: ['O3', 'O4'], title: '自动化工作流偏好' }
+};
+
+// Tracks which observations were affected when a world/experience fact was deleted
+// Used during recovery to re-inject the fact back into observations
+var deletedFactAffectedObs = {};
+
+// Tracks original deleted sources for stale observations
+// Used by restore dialog to show which facts were deleted
+var staleDeletedSources = {
+  'O3': ['E003'],
+  'O5': ['W005']
+};
+
+function findAffectedObservations(factId, factType) {
+  var affected = [];
+  for (var obsId in obsDeps) {
+    var dep = obsDeps[obsId];
+    if (dep.sources.indexOf(factId) >= 0) {
+      // Check if this obs has other remaining sources
+      var remainingSources = dep.sources.filter(function(s) { return s !== factId; });
+      affected.push({
+        id: obsId,
+        title: dep.title,
+        remainingSources: remainingSources,
+        orphaned: remainingSources.length === 0
+      });
+    }
+  }
+  return affected;
+}
+
+function updateObsSourceDisplay(obsId) {
+  if (!obsDeps[obsId]) return;
+  var newSources = obsDeps[obsId].sources.join(', ');
+  var obsRow = document.querySelector('#panel-observation tr[data-row-id="' + obsId + '"]');
+  if (obsRow) {
+    var sourceCell = obsRow.querySelector('td:nth-child(3)');
+    if (sourceCell) {
+      sourceCell.textContent = newSources || '—';
+    }
+  }
+}
+
+function reinjectFactToObservations(factId, factType) {
+  var affectedObsIds = deletedFactAffectedObs[factId];
+  if (!affectedObsIds || affectedObsIds.length === 0) return;
+
+  for (var i = 0; i < affectedObsIds.length; i++) {
+    var obsId = affectedObsIds[i];
+    // 重新注入依赖
+    if (obsDeps[obsId] && obsDeps[obsId].sources.indexOf(factId) < 0) {
+      obsDeps[obsId].sources.push(factId);
+    }
+    updateObsSourceDisplay(obsId);
+    // 从待重建移回已发布
+    moveObsBackFromStale(obsId);
+    // 清理已删除来源记录
+    if (staleDeletedSources[obsId]) {
+      staleDeletedSources[obsId] = staleDeletedSources[obsId].filter(function(s) { return s !== factId; });
+      if (staleDeletedSources[obsId].length === 0) delete staleDeletedSources[obsId];
+    }
+  }
+
+  delete deletedFactAffectedObs[factId];
+
+  var banner = document.getElementById('consolidation-banner');
+  if (banner) {
+    banner.classList.add('show');
+    banner.querySelector('.cons-text').textContent = 'Consolidation 进行中 — ' + factId + ' 已恢复，重新注入 ' + affectedObsIds.length + ' 条 observation 依赖...';
+    setTimeout(function() {
+      banner.classList.add('done');
+      banner.querySelector('.cons-text').textContent = 'Consolidation 完成 — ' + affectedObsIds.length + ' 条 observation 依赖已恢复，已移回已发布';
+    }, 2000);
+    setTimeout(function() { banner.classList.remove('show', 'done'); }, 5000);
+  }
+}
+
+function showCascadeConfirm(factId, factType, affected, tr) {
+  var factLabel = factType === 'world' ? 'World' : 'Experience';
+  var totalAffected = affected.length;
+  var orphaned = affected.filter(function(a) { return a.orphaned; });
+  var weakened = affected.filter(function(a) { return !a.orphaned; });
+  var hasImpact = totalAffected > 0;
+
+  var html = '<div style="font-size:13.5px;line-height:1.8;color:var(--text-primary);">';
+  html += '<div style="margin-bottom:12px;"><strong style="color:var(--danger);">&#9888; 删除 ' + factLabel + ' 「<code style="background:#fef2f2;padding:1px 6px;border-radius:3px;">' + factId + '</code>」</strong></div>';
+
+  // 影响范围面板
+  html += '<div style="margin-bottom:10px;padding:10px 14px;background:' + (hasImpact ? 'var(--warning-light)' : '#f0fdf4') + ';border:1px solid ' + (hasImpact ? '#fde68a' : '#bbf7d0') + ';border-radius:6px;">';
+
+  if (hasImpact) {
+    html += '<div style="font-weight:600;margin-bottom:6px;">&#128269; 影响范围：共 <strong>' + (totalAffected) + '</strong> 条 observation</div>';
+
+    if (orphaned.length > 0) {
+      html += '<div style="margin-bottom:4px;color:var(--danger);">';
+      html += '&#10007; 将<strong>完全失效</strong>（' + orphaned.length + '条）：';
+      html += orphaned.map(function(o) { return '<code style="background:#fef2f2;padding:1px 5px;border-radius:3px;">' + o.id + ' ' + o.title + '</code>'; }).join('、');
+      html += '</div>';
+    }
+
+    if (weakened.length > 0) {
+      html += '<div style="margin-top:6px;color:#c2410c;">';
+      html += '&#9888; 将<strong>置信度下降</strong>（' + weakened.length + '条）：';
+      html += weakened.map(function(o) {
+        return '<code style="background:#fef3c7;padding:1px 5px;border-radius:3px;">' + o.id + ' ' + o.title + '</code>（仍依赖 ' + o.remainingSources.join('、') + '）';
+      }).join('、');
+      html += '</div>';
+    }
+  } else {
+    html += '<div style="font-weight:600;color:#166534;">&#10003; 无级联影响</div>';
+    html += '<div style="font-size:12px;color:#4ade80;margin-top:4px;">此 ' + factLabel + ' 未被任何 observation 引用，可直接安全删除。</div>';
+  }
+
+  html += '</div>';
+
+  if (hasImpact) {
+    html += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;line-height:1.7;">';
+    html += '删除后 Hindsight 将自动：<br>';
+    html += '1. 将 ' + totalAffected + ' 条 observation 标记为「待重建」<br>';
+    html += '2. 触发后台 consolidation 重新生成依赖关系<br>';
+    html += '3. 更新 embedding 索引以反映最新状态';
+    html += '</div>';
+  }
+
+  // Custom action buttons
+  html += '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">';
+  html += '<button class="btn" onclick="closeCascadeDialog()" style="border-color:var(--border);">取消</button>';
+  html += '<button class="btn btn-danger" onclick="confirmCascadeDelete(\'' + factId + '\', \'' + factType + '\', ' + JSON.stringify(affected.map(function(a){ return a.id; })) + ')" style="background:var(--danger);color:white;border-color:var(--danger);">确认删除</button>';
+  html += '</div>';
+  html += '</div>';
+
+  document.getElementById('cascade-dialog-body').innerHTML = html;
+  document.getElementById('cascade-dialog').classList.add('open');
+  // Store tr reference for later
+  document.getElementById('cascade-dialog')._pendingTr = tr;
+}
+
+function closeCascadeDialog() {
+  document.getElementById('cascade-dialog').classList.remove('open');
+  document.getElementById('cascade-dialog')._pendingTr = null;
+}
+
+function confirmCascadeDelete(factId, factType, affectedObsIds) {
+  var dialog = document.getElementById('cascade-dialog');
+  var tr = dialog._pendingTr;
+  dialog.classList.remove('open');
+  dialog._pendingTr = null;
+
+  if (!tr) return;
+
+  // 0. 存储受影响 observation，供恢复时使用
+  deletedFactAffectedObs[factId] = affectedObsIds.slice();
+
+  if (affectedObsIds.length > 0) {
+    // 1. 更新 observation 依赖：移除该 factId
+    for (var i = 0; i < affectedObsIds.length; i++) {
+      var obsId = affectedObsIds[i];
+      if (obsDeps[obsId]) {
+        obsDeps[obsId].sources = obsDeps[obsId].sources.filter(function(s) { return s !== factId; });
+        // 记录已删除的来源，供恢复对话框展示
+        if (!staleDeletedSources[obsId]) staleDeletedSources[obsId] = [];
+        if (staleDeletedSources[obsId].indexOf(factId) < 0) staleDeletedSources[obsId].push(factId);
+      }
+      updateObsSourceDisplay(obsId);
+    }
+
+    // 2. 将受影响 observation 移入「待重建」面板
+    markObservationsStale(affectedObsIds, factId);
+
+    // 3. 执行真正的删除（不含 toast，consolidation banner 已提供反馈）
+    doDeleteRow(tr, factId, factType);
+  } else {
+    // 无级联影响：直接删除
+    doDeleteRow(tr, factId, factType);
+    showToast(factId + ' 已安全删除（无 observation 依赖）', 'success');
+  }
+}
+
+function doDeleteRow(tr, rowId, rowType) {
+  // Animate deletion
+  tr.style.opacity = '0'; tr.style.transition = 'opacity 0.25s';
+  setTimeout(function() { tr.remove(); }, 250);
+
+  // Remove graph node + related edges
+  removeGraphNode(rowId);
+
+  if (rowType === 'observation') {
+    showToast('Observation ' + rowId + ' 已删除，world/experience 不受影响', 'error');
+    updateObsTabBadge();
+  } else if (rowType === 'mental-model') {
+    showToast('个人记忆 ' + rowId + ' 已删除', 'error');
+    updateMentalBadge();
+  }
+}
+
+function updateObsTabBadge() {
+  var panel = document.getElementById('obs-published');
+  if (!panel) return;
+  var rows = panel.querySelectorAll('tbody tr[data-row-id]');
+  var count = rows.length;
+  var countEl = document.querySelector('#panel-observation .status-count');
+  if (countEl) countEl.textContent = '(' + count + ')';
+  var tabBadge = document.querySelector('.section-tab[data-section="observation"] .tab-badge');
+  if (tabBadge) tabBadge.textContent = count;
+}
+
+function updateMentalBadge() {
+  var panel = document.getElementById('panel-mental');
+  if (!panel) return;
+  var rows = panel.querySelectorAll('tbody tr[data-row-id]');
+  var count = rows.length;
+  var tabBadge = document.querySelector('.section-tab[data-section="mental"] .tab-badge');
+  if (tabBadge) tabBadge.textContent = count;
+}
+
+function showCascadeCleanupToast(factId, factLabel, affectedObsIds) {
+  var c = document.getElementById('toast-container');
+  var t = document.createElement('div');
+  t.className = 'toast warning cascade-toast';
+  t.style.borderLeftColor = '#f59e0b';
+  t.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01  y2="17"/></svg>' +
+    '<span><strong>' + factId + '</strong> 已删除 — <span style="color:#dc2626;">' + affectedObsIds.length + '</span> 条 observation 标记为待重建，consolidation 已触发</span>';
+  c.appendChild(t);
+  setTimeout(function() { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; setTimeout(function() { t.remove(); }, 300); }, 4000);
+}
+
+function markObservationsStale(obsIds, factId) {
+  updateStaleTabCount(obsIds.length);
+  triggerConsolidationBanner(obsIds);
+
+  setTimeout(function() {
+    obsIds.forEach(function(obsId) {
+      var row = document.querySelector('#obs-published tr[data-row-id="' + obsId + '"], #obs-draft tr[data-row-id="' + obsId + '"], #obs-unpublished tr[data-row-id="' + obsId + '"]');
+      if (row) {
+        row.classList.add('stale-flash');
+        setTimeout(function() { row.classList.remove('stale-flash'); }, 900);
+        // 移入待重建面板，同时从原面板移除
+        moveObsToStalePanel(row, obsId, factId);
+        row.style.opacity = '0'; row.style.transition = 'opacity 0.25s';
+        setTimeout(function() { if (row.parentNode) row.remove(); }, 250);
+      }
+    });
+    updateObsTabBadge();
+  }, 400);
+
+  setTimeout(function() {
+    var banner = document.getElementById('consolidation-banner');
+    if (banner) {
+      banner.classList.add('done');
+      banner.querySelector('.cons-text').textContent = 'Consolidation 完成 — ' + obsIds.length + ' 条 observation 已移至「待重建」页签';
+      setTimeout(function() {
+        banner.classList.remove('show', 'done');
+        banner.querySelector('.cons-text').textContent = 'Consolidation 进行中 — 正在根据底层事实变更重建 observation ...';
+      }, 4000);
+    }
+  }, 3000);
+}
+
+function moveObsToStalePanel(row, obsId, factId) {
+  var staleTbody = document.getElementById('stale-obs-tbody');
+  var emptyHint = document.getElementById('stale-empty');
+  if (!staleTbody) return;
+
+  var now = new Date().toLocaleString('zh-CN');
+  var dep = obsDeps[obsId];
+  var obsTitle = dep ? dep.title : obsId;
+  var remainingCount = dep ? dep.sources.length : 0;
+
+  // 动态生成失效原因
+  var reasonHtml;
+  if (remainingCount === 0) {
+    reasonHtml = '<span style="font-size:12px;color:var(--danger);">底层事实全部删除，无有效归纳来源</span>';
+  } else {
+    reasonHtml = '<span style="font-size:12px;color:#b45309;">部分来源已删除，剩余 ' + remainingCount + ' 条有效来源</span>';
+  }
+
+  // 动态生成源变更文本
+  var srcChange = factId ? '<code style="background:#fef2f2;padding:1px 5px;border-radius:3px;color:var(--danger);">' + factId + ' 已被删除</code>' : '<code style="background:#fef2f2;padding:1px 5px;border-radius:3px;color:var(--danger);">底层事实变更</code>';
+  if (remainingCount > 0 && dep) {
+    srcChange += ' <code style="background:#f0fdf4;padding:1px 5px;border-radius:3px;color:#166534;">剩余: ' + dep.sources.join(', ') + '</code>';
+  }
+
+  var newRow = document.createElement('tr');
+  newRow.setAttribute('data-row-id', obsId);
+  newRow.innerHTML = '<td><input type="checkbox" class="checkbox row-check"></td>' +
+    '<td><strong>' + obsTitle + '</strong></td>' +
+    '<td>' + reasonHtml + '</td>' +
+    '<td>' + srcChange + '</td>' +
+    '<td style="font-size:12px;color:var(--text-muted);white-space:nowrap;">' + now + '</td>' +
+    '<td><div class="action-group">' +
+    '<button class="btn btn-sm btn-warning" onclick="showObsRestoreDialog(\'' + obsId + '\')">' +
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>恢复</button>' +
+    '<button class="btn btn-sm btn-danger" onclick="deleteRow(this)">删除</button>' +
+    '</div></td>';
+
+  staleTbody.appendChild(newRow);
+  if (emptyHint) emptyHint.style.display = 'none';
+}
+
+function moveObsBackFromStale(obsId) {
+  var staleTbody = document.getElementById('stale-obs-tbody');
+  var publishedTbody = document.querySelector('#obs-published tbody');
+  var emptyHint = document.getElementById('stale-empty');
+  if (!staleTbody || !publishedTbody) return;
+
+  var staleRow = staleTbody.querySelector('tr[data-row-id="' + obsId + '"]');
+  if (!staleRow) return;
+
+  // 从待重建面板移除
+  staleRow.style.opacity = '0'; staleRow.style.transition = 'opacity 0.25s';
+  setTimeout(function() { if (staleRow.parentNode) staleRow.remove(); }, 250);
+
+  // 检查是否还有剩余行
+  setTimeout(function() {
+    var remaining = staleTbody.querySelectorAll('tr').length;
+    if (remaining === 0 && emptyHint) emptyHint.style.display = '';
+    // 更新 stale 标签计数
+    var tab = document.getElementById('tab-obs-stale');
+    if (tab) { var span = tab.querySelector('.status-count'); if (span) span.textContent = '(' + remaining + ')'; }
+  }, 300);
+
+  // 重建已发布面板中的行（恢复为已发布状态）
+  var dep = obsDeps[obsId];
+  var obsTitle = dep ? dep.title : obsId;
+  var sourcesText = dep ? dep.sources.join(', ') : '';
+  var now = new Date().toLocaleString('zh-CN').replace(/\//g, '-');
+
+  var restoredRow = document.createElement('tr');
+  restoredRow.setAttribute('data-row-id', obsId);
+  restoredRow.innerHTML = '<td><input type="checkbox" class="checkbox row-check"></td>' +
+    '<td>' + obsTitle + '</td>' +
+    '<td>' + (sourcesText || '—') + '</td>' +
+    '<td style="font-size:12px;color:var(--text-muted);white-space:nowrap;">' + now + '</td>' +
+    '<td><div class="action-group">' +
+    '<button class="action-btn" title="查看" onclick="viewItem(\'observation\',\'' + obsTitle + '——基于 ' + sourcesText + ' 归纳\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>' +
+    '<button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>' +
+    '</div></td>';
+
+  publishedTbody.appendChild(restoredRow);
+  updateObsTabBadge();
+}
+
+function updateStaleTabCount(count) {
+  var tab = document.getElementById('tab-obs-stale');
+  if (!tab) return;
+  var countSpan = tab.querySelector('.status-count');
+  if (countSpan) {
+    var currentCount = parseInt(countSpan.textContent.replace(/[()]/g, '')) || 0;
+    countSpan.textContent = '(' + (currentCount + count) + ')';
+  }
+}
+
+function triggerConsolidationBanner(obsIds) {
+  var banner = document.getElementById('consolidation-banner');
+  if (!banner) return;
+  banner.classList.remove('done');
+  banner.classList.add('show');
+  banner.querySelector('.cons-text').textContent = 'Consolidation 进行中 — 正在根据底层事实变更重建 observation（影响 ' + obsIds.length + ' 条）...';
+}
+
+function triggerRebuildAll() {
+  var staleTbody = document.getElementById('stale-obs-tbody');
+  var emptyHint = document.getElementById('stale-empty');
+  if (!staleTbody) return;
+  var rows = staleTbody.querySelectorAll('tr');
+  if (rows.length === 0) { showToast('没有需要重建的条目', 'warning'); return; }
+
+  showToast('开始批量重建 ' + rows.length + ' 条 observation...', 'warning');
+  // Simulate rebuild progress
+  rows.forEach(function(row, i) {
+    setTimeout(function() {
+      var actions = row.querySelector('.action-group');
+      if (actions) {
+        actions.innerHTML = '<span class="tag tag-rebuilding" style="font-size:11px;">重建中...</span>';
+      }
+    }, 200 + i * 300);
+  });
+
+  // Completion
+  setTimeout(function() {
+    staleTbody.innerHTML = '';
+    if (emptyHint) emptyHint.style.display = '';
+    // Reset tab count
+    var tab = document.getElementById('tab-obs-stale');
+    if (tab) { var span = tab.querySelector('.status-count'); if (span) span.textContent = '(0)'; }
+    showToast('全部 ' + rows.length + ' 条 observation 已重建完成', 'success');
+  }, 200 + rows.length * 300 + 1500);
+}
+
+function showObsRestoreDialog(obsId) {
+  var dep = obsDeps[obsId];
+  if (!dep) { showToast('未找到 ' + obsId + ' 的依赖信息', 'error'); return; }
+
+  // Merge current sources + historically deleted sources for display
+  var currentSources = dep.sources || [];
+  var deletedSrcs = staleDeletedSources[obsId] || [];
+  var allOriginalSources = currentSources.concat(deletedSrcs.filter(function(s) { return currentSources.indexOf(s) < 0; }));
+
+  var html = '<div style="font-size:13.5px;line-height:1.8;color:var(--text-primary);">';
+
+  // Header
+  html += '<div style="margin-bottom:14px;">';
+  html += '<strong style="font-size:14px;">Observation: ' + obsId + '</strong>';
+  html += '<div style="font-size:12.5px;color:var(--text-secondary);margin-top:2px;">' + dep.title + '</div>';
+  html += '</div>';
+
+  // Dependency nodes status
+  html += '<div style="margin-bottom:12px;padding:12px 14px;background:var(--bg);border:1px solid var(--border-light);border-radius:var(--radius-sm);">';
+  html += '<div style="font-weight:600;margin-bottom:10px;font-size:12.5px;color:var(--text-secondary);">归纳依据节点状态</div>';
+
+  var allActive = true;
+  var hasDeletedFacts = false;
+  var activeSources = [];
+  var deletedSources = [];
+
+  allOriginalSources.forEach(function(srcId) {
+    // Check if the source still exists — either in DOM or in current obsDeps.sources
+    var srcRow = document.querySelector('[data-row-id="' + srcId + '"]');
+    var inCurrentSources = currentSources.indexOf(srcId) >= 0;
+    var srcType = '';
+    if (srcId.indexOf('W') === 0) srcType = 'world';
+    else if (srcId.indexOf('E') === 0) srcType = 'experience';
+    else if (srcId.indexOf('O') === 0) srcType = 'observation';
+
+    if (srcRow && inCurrentSources) {
+      activeSources.push({ id: srcId, type: srcType });
+    } else {
+      deletedSources.push({ id: srcId, type: srcType });
+      allActive = false;
+      hasDeletedFacts = true;
+    }
+  });
+
+  // Render active sources
+  html += '<div style="margin-bottom:8px;">';
+  html += '<span style="font-size:12px;color:#166534;">&#10003; 仍存在的节点（' + activeSources.length + '个）</span><br>';
+  if (activeSources.length === 0) {
+    html += '<span style="font-size:12px;color:var(--text-muted);">无</span>';
+  } else {
+    activeSources.forEach(function(s) {
+      var typeTag = s.type === 'world' ? 'tag-world' : s.type === 'experience' ? 'tag-experience' : 'tag-observation';
+      var typeLabel = s.type === 'world' ? 'World' : s.type === 'experience' ? 'Experience' : 'Observation';
+      html += '<span class="tag ' + typeTag + '" style="margin-right:4px;margin-bottom:4px;">' + typeLabel + '</span>';
+      html += '<code style="background:#f0fdf4;padding:1px 5px;border-radius:3px;color:#166534;">' + s.id + '</code> ';
+    });
+  }
+  html += '</div>';
+
+  // Render deleted sources
+  if (deletedSources.length > 0) {
+    html += '<div style="margin-top:6px;">';
+    html += '<span style="font-size:12px;color:var(--danger);">&#10007; 已删除的节点（' + deletedSources.length + '个）</span><br>';
+    deletedSources.forEach(function(s) {
+      var typeLabel = s.type === 'world' ? 'World' : s.type === 'experience' ? 'Experience' : 'Observation';
+      html += '<span class="tag tag-stale" style="margin-right:4px;margin-bottom:4px;">' + typeLabel + '</span>';
+      html += '<code style="background:#fef2f2;padding:1px 5px;border-radius:3px;color:var(--danger);text-decoration:line-through;">' + s.id + '</code> ';
+    });
+    html += '</div>';
+  }
+  html += '</div>';
+
+  // Restore action summary
+  html += '<div style="margin-bottom:12px;padding:10px 14px;background:var(--bg);border:1px solid var(--border-light);border-radius:var(--radius-sm);font-size:12px;line-height:1.7;color:var(--text-secondary);">';
+  if (allActive) {
+    html += '<span style="color:#166534;">&#10003; 所有归纳依据节点均存在，可以安全恢复</span><br>';
+    html += '恢复后 observation 将回到「已发布」状态，归纳来源：<code>' + dep.sources.join(', ') + '</code>';
+  } else {
+    html += '<span style="color:#b45309;">&#9888; 存在 ' + deletedSources.length + ' 个已删除的归纳节点</span><br>';
+    html += '恢复后仅保留有效来源，observation 将以部分依赖状态发布';
+    if (activeSources.length > 0) {
+      html += '<br>有效来源：<code>' + activeSources.map(function(s){return s.id;}).join(', ') + '</code>';
+    }
+  }
+  html += '</div>';
+
+  // Buttons
+  html += '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">';
+  html += '<button class="btn" onclick="closeModal(\'restore-deps-dialog\')" style="border-color:var(--border);">取消</button>';
+  html += '<button class="btn btn-primary" onclick="executeObsRestore(\'' + obsId + '\')" style="background:var(--primary);color:white;border-color:var(--primary);">确认恢复</button>';
+  html += '</div>';
+
+  html += '</div>';
+
+  document.getElementById('restore-deps-body').innerHTML = html;
+  openModal('restore-deps-dialog');
+}
+
+function executeObsRestore(obsId) {
+  closeModal('restore-deps-dialog');
+
+  var row = document.querySelector('#stale-obs-tbody tr[data-row-id="' + obsId + '"]');
+  if (!row) return;
+  var actions = row.querySelector('.action-group');
+  if (actions) actions.innerHTML = '<span class="tag tag-rebuilding" style="font-size:11px;">恢复中...</span>';
+
+  setTimeout(function() {
+    row.style.opacity = '0'; row.style.transition = 'opacity 0.3s';
+    setTimeout(function() {
+      row.remove();
+      var staleTbody = document.getElementById('stale-obs-tbody');
+      var emptyHint = document.getElementById('stale-empty');
+      var remaining = staleTbody ? staleTbody.querySelectorAll('tr').length : 0;
+      if (remaining === 0 && emptyHint) emptyHint.style.display = '';
+
+      // Update tab count
+      var tab = document.getElementById('tab-obs-stale');
+      if (tab) { var span = tab.querySelector('.status-count'); if (span) span.textContent = '(' + remaining + ')'; }
+
+      // Move back to published panel
+      moveObsBackFromStale(obsId);
+
+      // Clean up stale tracking
+      if (staleDeletedSources[obsId]) delete staleDeletedSources[obsId];
+
+      showToast(obsId + ' 已恢复并发布 — 依赖节点状态已同步', 'success');
+    }, 300);
+  }, 1500);
+}
+
 function changeStatus(btn, newStatus) {
-  const tr = btn.closest('tr');
-  const statusTag = tr ? tr.querySelector('.tag') : null;
+  var tr = btn.closest('tr');
+  var statusTag = tr ? tr.querySelector('.tag') : null;
   if (!statusTag) return;
-  const statusMap = {'已发布':'tag-published','草稿':'tag-draft','未发布':'tag-unpublished'};
+  var oldStatus = statusTag.textContent;
+  var statusMap = {'已发布':'tag-published','草稿':'tag-draft','未发布':'tag-unpublished','待重建':'tag-stale'};
   statusTag.className = 'tag ' + (statusMap[newStatus] || '');
   statusTag.textContent = newStatus;
-  showToast('状态已变更为「' + newStatus + '」', 'success');
+
+  // If marking as stale, simulate underlying fact change
+  if (newStatus === '待重建' && oldStatus !== '待重建') {
+    showToast('Observation 已标记为「待重建」— 底层事实已变更，等待 consolidation', 'warning');
+  } else {
+    showToast('状态已变更为「' + newStatus + '」', 'success');
+  }
 }
 function restoreItem(btn) {
   const tr = btn.closest('tr');
@@ -1405,10 +2212,235 @@ function restoreItem(btn) {
     showToast('记录已恢复', 'success');
   }
 }
+
+// ===== 回收站事务恢复 =====
+// 检查恢复冲突
+function checkRestoreConflict(entryId, entryType) {
+  // Observation / Mental-model: 直接搜索对应面板
+  if (entryType === 'observation') {
+    var obsRows = document.querySelectorAll('#panel-observation tr[data-row-id="' + entryId + '"]');
+    if (obsRows.length > 0) {
+      return { entryId: entryId, entryType: 'observation', existingRow: obsRows[0] };
+    }
+    return null;
+  }
+  if (entryType === 'mental-model') {
+    var mentalRows = document.querySelectorAll('#panel-mental tr[data-row-id="' + entryId + '"]');
+    if (mentalRows.length > 0) {
+      return { entryId: entryId, entryType: 'mental-model', existingRow: mentalRows[0] };
+    }
+    return null;
+  }
+  // World/Experience: 搜索对应子面板
+  var listPanelId = entryType === 'world' ? 'world-list' : 'exp-list';
+  var listPanel = document.getElementById(listPanelId);
+  if (!listPanel) return null;
+  var rows = listPanel.querySelectorAll('tr[data-row-id="' + entryId + '"]');
+  if (rows.length > 0) {
+    return {
+      entryId: entryId,
+      entryType: entryType,
+      existingRow: rows[0]
+    };
+  }
+  // Also check observation panel for world/exp
+  var obsRows2 = document.querySelectorAll('#panel-observation tr[data-row-id="' + entryId + '"]');
+  if (obsRows2.length > 0) {
+    return {
+      entryId: entryId,
+      entryType: 'observation',
+      existingRow: obsRows2[0]
+    };
+  }
+  return null;
+}
+
+function executeRestore(txId, entryId, entryType, strategy) {
+  // strategy: 'overwrite' | 'merge' | 'skip'
+  if (strategy === 'skip') {
+    closeModal('conflict-resolve-modal');
+    showToast('恢复已取消', 'warning');
+    return;
+  }
+
+  var card = document.querySelector('#panel-trash .card[data-tx-id="' + txId + '"]');
+  if (card) {
+    card.style.opacity = '0'; card.style.transition = 'opacity 0.3s';
+    setTimeout(function() { if (card.parentNode) card.parentNode.removeChild(card); }, 300);
+  }
+
+  if (strategy === 'overwrite') {
+    // Remove existing conflicting row
+    var conflict = checkRestoreConflict(entryId, entryType);
+    if (conflict && conflict.existingRow) {
+      conflict.existingRow.style.opacity = '0';
+      setTimeout(function() { if (conflict.existingRow.parentNode) conflict.existingRow.remove(); }, 300);
+    }
+    showToast('事务 ' + txId + ' 已恢复（覆盖模式）— 原条目已替换', 'success');
+  } else {
+    showToast('事务 ' + txId + ' 已恢复（合并模式）— 两条记录已共存', 'success');
+  }
+
+  // Re-inject world/experience dependency into affected observations
+  if (entryType === 'world' || entryType === 'experience') {
+    reinjectFactToObservations(entryId, entryType);
+  }
+
+  // Show consolidation mini-banner
+  var banner = document.getElementById('consolidation-banner');
+  if (banner) {
+    banner.classList.add('show');
+    banner.querySelector('.cons-text').textContent = 'Consolidation 进行中 — 恢复' + txId + '后重新校验依赖关系...';
+    setTimeout(function() {
+      banner.classList.add('done');
+      banner.querySelector('.cons-text').textContent = 'Consolidation 完成 — ' + txId + ' 恢复完毕，关联 observation 置信度已复位';
+    }, 2000);
+    setTimeout(function() { banner.classList.remove('show', 'done'); }, 5000);
+  }
+}
+
+function restoreTrashTransaction(txId) {
+  var card = document.querySelector('#panel-trash .card[data-tx-id="' + txId + '"]');
+  if (!card) return;
+  var entryId = card.getAttribute('data-entry-id');
+  var entryType = card.getAttribute('data-entry-type');
+
+  // Observation / Mental-model: 直接恢复，无需冲突处理（world/experience 不受影响）
+  if (entryType === 'observation' || entryType === 'mental-model') {
+    card.style.opacity = '0'; card.style.transition = 'opacity 0.3s';
+    setTimeout(function() { if (card.parentNode) card.parentNode.removeChild(card); }, 300);
+    var label = entryType === 'observation' ? 'Observation' : '个人记忆';
+    showToast('事务 ' + txId + ' 已恢复 — ' + label + ' ' + entryId + ' 已还原，图谱节点已重建', 'success');
+    // Re-add graph node if stored attributes exist
+    var graphLabel = card.getAttribute('data-graph-label');
+    var graphDesc = card.getAttribute('data-graph-desc');
+    if (graphLabel) {
+      addGraphNode(entryId, entryType, graphLabel, graphDesc || '');
+    }
+    // Update badges
+    if (entryType === 'observation') updateObsTabBadge();
+    else updateMentalBadge();
+    return;
+  }
+
+  // World/Experience: 原有冲突处理逻辑
+  var conflict = checkRestoreConflict(entryId, entryType);
+  if (conflict) {
+    showConflictModal(txId, entryId, entryType, conflict, 'full');
+  } else {
+    // No conflict, proceed directly
+    card.style.opacity = '0'; card.style.transition = 'opacity 0.3s';
+    setTimeout(function() { if (card.parentNode) card.parentNode.removeChild(card); }, 300);
+    showToast('事务 ' + txId + ' 已完整恢复 — 主条目及所有关联条目已还原', 'success');
+
+    // Re-inject world/experience dependency into affected observations
+    if (entryType === 'world' || entryType === 'experience') {
+      reinjectFactToObservations(entryId, entryType);
+    }
+
+    var banner = document.getElementById('consolidation-banner');
+    if (banner) {
+      banner.classList.add('show');
+      banner.querySelector('.cons-text').textContent = 'Consolidation 进行中 — 恢复' + txId + '后重新校验依赖关系...';
+      setTimeout(function() {
+        banner.classList.add('done');
+        banner.querySelector('.cons-text').textContent = 'Consolidation 完成 — ' + txId + ' 恢复完毕，关联 observation 置信度已复位';
+      }, 2000);
+      setTimeout(function() { banner.classList.remove('show', 'done'); }, 5000);
+    }
+  }
+}
+
+function restoreTrashPrimaryOnly(txId) {
+  var card = document.querySelector('#panel-trash .card[data-tx-id="' + txId + '"]');
+  if (!card) return;
+  var entryId = card.getAttribute('data-entry-id');
+  var entryType = card.getAttribute('data-entry-type');
+
+  // Observation / Mental-model: 简化恢复
+  if (entryType === 'observation' || entryType === 'mental-model') {
+    card.style.opacity = '0'; card.style.transition = 'opacity 0.3s';
+    setTimeout(function() { if (card.parentNode) card.parentNode.removeChild(card); }, 300);
+    var label = entryType === 'observation' ? 'Observation' : '个人记忆';
+    showToast('已恢复 ' + txId + ' — ' + label + ' ' + entryId + ' 已还原', 'success');
+    var graphLabel = card.getAttribute('data-graph-label');
+    var graphDesc = card.getAttribute('data-graph-desc');
+    if (graphLabel) {
+      addGraphNode(entryId, entryType, graphLabel, graphDesc || '');
+    }
+    if (entryType === 'observation') updateObsTabBadge();
+    else updateMentalBadge();
+    return;
+  }
+
+  // World/Experience: 原有逻辑
+  var conflict = checkRestoreConflict(entryId, entryType);
+  if (conflict) {
+    showConflictModal(txId, entryId, entryType, conflict, 'primary');
+  } else {
+    card.style.opacity = '0'; card.style.transition = 'opacity 0.3s';
+    setTimeout(function() { if (card.parentNode) card.parentNode.removeChild(card); }, 300);
+    showToast('已仅恢复 ' + txId + ' 的主条目 — 关联 observation 保持待重建状态', 'warning');
+
+    // Re-inject world/experience dependency into affected observations
+    if (entryType === 'world' || entryType === 'experience') {
+      reinjectFactToObservations(entryId, entryType);
+    }
+  }
+}
+
+function showConflictModal(txId, entryId, entryType, conflict, restoreMode) {
+  var typeLabel = entryType === 'world' ? 'World' : entryType === 'experience' ? 'Experience' : entryType === 'mental-model' ? '个人记忆' : 'Observation';
+  var typeCn = entryType === 'world' ? '客观事实' : entryType === 'experience' ? 'Agent 感知' : '观察';
+
+  var html = '<div style="font-size:13.5px;line-height:1.8;">';
+  html += '<div style="margin-bottom:14px;padding:12px 14px;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;">';
+  html += '<div style="color:var(--danger);font-weight:600;margin-bottom:4px;">&#9888; 恢复冲突检测</div>';
+  html += '<div style="color:var(--text-secondary);">事务 <strong>' + txId + '</strong> 中的条目 <code style="background:#fef2f2;padding:1px 6px;border-radius:3px;">' + entryId + '</code>（' + typeLabel + '）与当前活动表中已存在的同名条目冲突。</div>';
+  html += '</div>';
+
+  html += '<div style="margin-bottom:14px;">';
+  html += '<div style="font-weight:600;font-size:12.5px;color:var(--text-muted);margin-bottom:8px;">请选择解决策略：</div>';
+
+  // Option 1: Overwrite
+  html += '<div style="padding:10px 14px;margin-bottom:8px;border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor=\'var(--danger)\';this.style.background=\'#fef2f2\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.background=\'white\'" onclick="executeRestore(\'' + txId + '\',\'' + entryId + '\',\'' + entryType + '\',\'overwrite\')">';
+  html += '<div style="font-weight:600;font-size:13px;color:var(--danger);">&#10007; 覆盖 (Overwrite)</div>';
+  html += '<div style="font-size:12px;color:var(--text-muted);">删除当前存在的同名条目，用回收站中的版本替换</div>';
+  html += '</div>';
+
+  // Option 2: Merge
+  html += '<div style="padding:10px 14px;margin-bottom:8px;border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor=\'var(--warning)\';this.style.background=\'#fffbeb\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.background=\'white\'" onclick="executeRestore(\'' + txId + '\',\'' + entryId + '\',\'' + entryType + '\',\'merge\')">';
+  html += '<div style="font-weight:600;font-size:13px;color:var(--warning);">&#9878; 合并 (Merge)</div>';
+  html += '<div style="font-size:12px;color:var(--text-muted);">保留两个条目，回收站的条目以新版本号共存</div>';
+  html += '</div>';
+
+  // Option 3: Skip
+  html += '<div style="padding:10px 14px;border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor=\'var(--text-muted)\';this.style.background=\'var(--bg)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.background=\'white\'" onclick="executeRestore(\'' + txId + '\',\'' + entryId + '\',\'' + entryType + '\',\'skip\')">';
+  html += '<div style="font-weight:600;font-size:13px;color:var(--text-secondary);">&#8634; 跳过 (Skip)</div>';
+  html += '<div style="font-size:12px;color:var(--text-muted);">放弃恢复，回收站中的条目保持不变</div>';
+  html += '</div>';
+
+  html += '</div>';
+  html += '</div>';
+
+  document.getElementById('conflict-resolve-body').innerHTML = html;
+  openModal('conflict-resolve-modal');
+}
+
+function permanentlyDeleteTransaction(btn) {
+  var card = btn.closest('.card');
+  if (!card) return;
+  var txId = card.getAttribute('data-tx-id') || 'Unknown';
+  if (confirm('确认永久删除事务 ' + txId + '？此操作不可撤销！')) {
+    card.style.opacity = '0'; card.style.transition = 'opacity 0.3s';
+    setTimeout(function() { if (card.parentNode) card.parentNode.removeChild(card); }, 300);
+    showToast('事务已永久删除', 'error');
+  }
+}
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); if (id === 'manual-add-modal' && _retainTimer) { clearTimeout(_retainTimer); _retainTimer = null; } }
 document.querySelectorAll('.modal-overlay').forEach(o => {
-  o.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('open'); });
+  o.addEventListener('click', function(e) { if (e.target === this) { if (this.id === 'cascade-dialog') { closeCascadeDialog(); } else if (this.id === 'conflict-resolve-modal') { closeModal('conflict-resolve-modal'); } else if (this.id === 'restore-deps-dialog') { closeModal('restore-deps-dialog'); } else { this.classList.remove('open'); } } });
 });
 function confirmAction(msg) {
   document.getElementById('confirm-msg').textContent = msg;
@@ -1427,13 +2459,28 @@ function showToast(msg, type) {
   c.appendChild(t);
   setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; setTimeout(() => t.remove(), 300); }, 2500);
 }
-function viewItem(type, content) {
-  var tagClass = type === 'world' ? 'tag-world' : type === 'experience' ? 'tag-experience' : 'tag-observation';
-  document.getElementById('vd-type').innerHTML = '<span class="tag ' + tagClass + '">' + type + '</span>';
+function viewItem(type, content, sessionName, sessionTime) {
+  var tagClass = type === 'world' ? 'tag-world' : type === 'experience' ? 'tag-experience' : type === 'observation' ? 'tag-observation' : type === 'mental-model' ? 'tag-mental-model' : 'tag-observation';
+  var typeLabel = type === 'mental-model' ? 'mental-model' : type;
+  document.getElementById('vd-type').innerHTML = '<span class="tag ' + tagClass + '">' + typeLabel + '</span>';
   document.getElementById('vd-content').textContent = content || '(无内容)';
+
+  // World / Experience 详情：展示会话信息（对话标题 + 时间）
+  var sessG = document.getElementById('vd-session-group');
+  if ((type === 'world' || type === 'experience') && (sessionName || sessionTime)) {
+    sessG.style.display = '';
+    var parts = [];
+    if (sessionName) parts.push('<div>对话标题：<strong>' + sessionName + '</strong></div>');
+    if (sessionTime) parts.push('<div>对话时间：' + sessionTime + '</div>');
+    document.getElementById('vd-session-info').innerHTML = parts.join('');
+  } else {
+    sessG.style.display = 'none';
+  }
 
   // Observation 详情：展示归纳依据
   var sg = document.getElementById('vd-sources-group');
+  var fresG = document.getElementById('vd-freshness-group');
+  var verG = document.getElementById('vd-version-group');
   var src = document.getElementById('vd-sources');
   if (type === 'observation') {
     sg.style.display = '';
@@ -1449,8 +2496,29 @@ function viewItem(type, content) {
     } else {
       src.innerHTML = '<span class="source-none">手动创建，无系统归纳依赖</span>';
     }
+
+    // Freshness indicator
+    fresG.style.display = '';
+    var hasWorldSrc = srcData.some(function(s) { return s.srcType === 'world'; });
+    var freshnessHtml = '';
+    if (hasWorldSrc) {
+      freshnessHtml = '<span class="freshness-indicator warning"><span class="freshness-dot"></span>部分依赖事实超过 3 天未更新</span>';
+    } else {
+      freshnessHtml = '<span class="freshness-indicator fresh"><span class="freshness-dot"></span>依赖事实最近更新：2 小时前</span>';
+    }
+    document.getElementById('vd-freshness').innerHTML = freshnessHtml;
+
+    // Version history
+    verG.style.display = '';
+    var now = new Date().toLocaleString('zh-CN');
+    document.getElementById('vd-versions').innerHTML =
+      '<div class="version-line"><span class="version-dot current"></span>v3 — ' + now + ' <span style="font-size:11px;color:var(--text-muted);">（当前）自动更新：新增 #E005 归纳来源</span></div>' +
+      '<div class="version-line"><span class="version-dot old"></span>v2 — 2026-06-02 14:20 <span style="font-size:11px;color:var(--text-muted);">归纳来源更新：新增 #E003</span></div>' +
+      '<div class="version-line"><span class="version-dot old"></span>v1 — 2026-06-01 09:05 <span style="font-size:11px;color:var(--text-muted);">初始创建</span></div>';
   } else {
     sg.style.display = 'none';
+    fresG.style.display = 'none';
+    verG.style.display = 'none';
   }
 
   document.getElementById('vd-meta').innerHTML = '创建时间：2026-06-03<br>最后更新：刚刚';
@@ -1551,6 +2619,33 @@ function resetSettings() {
   showToast('已恢复默认设置', 'warning');
 }
 
+// ===== 自动编号 =====
+function getNextId(type) {
+  var prefix = type === 'world' ? 'W' : type === 'experience' ? 'E' : type === 'observation' ? 'O' : 'M';
+  var pad = type === 'mental' || type === 'mental-model' ? 1 : (type === 'observation' ? 1 : 3);
+  var maxNum = 0;
+  // Scan table rows
+  var rows = document.querySelectorAll('[data-row-id]');
+  rows.forEach(function(r) {
+    var rid = r.getAttribute('data-row-id');
+    if (rid && rid[0] === prefix) {
+      var n = parseInt(rid.substring(1), 10);
+      if (!isNaN(n) && n > maxNum) maxNum = n;
+    }
+  });
+  // Scan graph nodes
+  if (typeof nodes !== 'undefined') {
+    nodes.forEach(function(n) {
+      if (n.id && n.id[0] === prefix) {
+        var m = parseInt(n.id.substring(1), 10);
+        if (!isNaN(m) && m > maxNum) maxNum = m;
+      }
+    });
+  }
+  var next = maxNum + 1;
+  return prefix + String(next).padStart(pad, '0');
+}
+
 // ===== 手动添加记忆 — Hindsight Retain 流程 =====
 var _retainTimer = null;
 
@@ -1563,7 +2658,7 @@ function openManualAdd() {
   document.getElementById('ma-result').classList.remove('show');
   document.getElementById('ma-btn-submit').style.display = '';
   document.getElementById('ma-btn-submit').textContent = '提交到 Hindsight Retain';
-  document.getElementById('ma-btn-cancel').textContent = '取消';
+  document.getElementById('manual-add-modal').querySelector('.modal-title').textContent = '添加个人记忆 — Hindsight Retain';
 
   // Reset steps
   var steps = document.querySelectorAll('#retain-steps .retain-step');
@@ -1573,6 +2668,7 @@ function openManualAdd() {
   steps[0].classList.add('active');
 
   if (_retainTimer) { clearTimeout(_retainTimer); _retainTimer = null; }
+  document.getElementById('ma-btn-cancel').textContent = '取消';
   openModal('manual-add-modal');
 }
 
@@ -1623,45 +2719,136 @@ function startRetainFlow() {
 }
 
 function showRetainResult(content) {
-  // 模拟抽取结果
-  var extractedWorlds = [];
-  var extractedExps = [];
+  // 模拟抽取 — 从内容中提取关键概念
+  var concepts = [];
   var text = content.toLowerCase();
 
-  if (text.indexOf('无锡') >= 0 || text.indexOf('常驻') >= 0) extractedWorlds.push('W007');
-  if (text.indexOf('react') >= 0 || text.indexOf('tailwind') >= 0) extractedWorlds.push('W008');
-  if (text.indexOf('中文') >= 0 || text.indexOf('简体') >= 0) extractedWorlds.push('W009');
-  if (text.indexOf('财经') >= 0 || text.indexOf('新闻') >= 0) extractedExps.push('E006');
-  if (text.indexOf('偏好') >= 0 || text.indexOf('习惯') >= 0) extractedExps.push('E007');
-  if (extractedWorlds.length === 0 && extractedExps.length === 0) {
-    extractedWorlds.push('W007');
-    extractedExps.push('E006');
-  }
+  if (text.indexOf('无锡') >= 0 || text.indexOf('常驻') >= 0) concepts.push('用户常驻无锡');
+  if (text.indexOf('react') >= 0 || text.indexOf('tailwind') >= 0 || text.indexOf('前端') >= 0) concepts.push('技术栈偏好（React / Tailwind）');
+  if (text.indexOf('中文') >= 0 || text.indexOf('简体') >= 0) concepts.push('语言沟通偏好（简体中文）');
+  if (text.indexOf('财经') >= 0 || text.indexOf('新闻') >= 0) concepts.push('财经信息关注习惯');
+  if (text.indexOf('竞品') >= 0 || text.indexOf('notion') >= 0 || text.indexOf('飞书') >= 0) concepts.push('协作工具竞品追踪');
+  if (text.indexOf('深色') >= 0 || text.indexOf('主题') >= 0) concepts.push('UI 偏好（深色模式）');
+  if (text.indexOf('迭代') >= 0 || text.indexOf('逐步') >= 0) concepts.push('增量开发方法论');
+  if (text.indexOf('白板') >= 0 || text.indexOf('画布') >= 0) concepts.push('白板协作工具开发');
+  if (concepts.length === 0) concepts.push('通用行为模式');
 
-  var resultDiv = document.getElementById('ma-result');
-  var title = resultDiv.querySelector('.result-summary-title');
-  var body = resultDiv.querySelector('.result-summary-body');
+  // 归纳：生成心智模型标题和摘要
+  var modelTitle = suggestMentalTitle(content);
+  var modelDesc = content.substring(0, 120) + (content.length > 120 ? '...' : '');
 
-  title.innerHTML = '&#10003; Retain 完成 — Bank: primary / v2-index';
-
-  var wh = extractedWorlds.map(function(w){ return '<code>' + w + '</code>'; }).join(', ');
-  var eh = extractedExps.map(function(e){ return '<code>' + e + '</code>'; }).join(', ');
   var now = new Date().toLocaleString('zh-CN');
-  var obsId = 'O' + (Math.floor(Math.random() * 90) + 10);
+  var mentalId = getNextId('mental');
 
-  body.innerHTML =
-    '<div style="margin-bottom:8px;"><strong>写入内容：</strong>' + sanitize(content).substring(0, 80) + (content.length > 80 ? '...' : '') + '</div>' +
-    '<div style="margin-bottom:4px;"><strong>抽取 world：</strong>' + wh + ' （共 ' + extractedWorlds.length + ' 条）</div>' +
-    '<div style="margin-bottom:4px;"><strong>抽取 experience：</strong>' + eh + ' （共 ' + extractedExps.length + ' 条）</div>' +
-    '<div style="margin-bottom:4px;"><strong>新生成 observation：</strong><code>' + obsId + '</code> <span class="tag tag-draft" style="font-size:11px;vertical-align:middle;">草稿</span></div>' +
+  // 构建结果展示
+  var resultDiv = document.getElementById('ma-result');
+  var titleEl = resultDiv.querySelector('.result-summary-title');
+  var bodyEl = resultDiv.querySelector('.result-summary-body');
+
+  titleEl.innerHTML = '&#10003; Retain 完成 — Bank: primary / v2-index';
+
+  var conceptsHtml = concepts.length === 0
+    ? '<span style="color:var(--text-muted);">未识别到明确模式，默认创建一个通用心智模型</span>'
+    : concepts.map(function(c, i) {
+        return '<div style="margin-bottom:4px;"><span style="display:inline-block;width:20px;height:20px;line-height:20px;text-align:center;background:#d4ede8;color:#1e4a42;border-radius:50%;font-size:11px;font-weight:700;margin-right:8px;">' + (i+1) + '</span>' + c + '</div>';
+      }).join('');
+
+  bodyEl.innerHTML =
+    '<div style="margin-bottom:12px;"><strong style="font-size:13px;">写入内容：</strong><div style="margin-top:4px;padding:8px 12px;background:var(--bg);border-radius:var(--radius-sm);font-size:12.5px;color:var(--text-secondary);">' + sanitize(content).substring(0, 150) + (content.length > 150 ? '...' : '') + '</div></div>' +
+    '<div style="margin-bottom:12px;"><strong style="font-size:13px;">&#128269; 抽取关键概念：</strong>（共 ' + concepts.length + ' 个）<div style="margin-top:6px;">' + conceptsHtml + '</div></div>' +
+    '<div style="margin-bottom:12px;padding:10px 14px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:var(--radius-sm);">' +
+      '<strong style="font-size:13px;">&#128170; 归纳心智模型：</strong>' +
+      '<div style="margin-top:6px;"><code style="font-size:13px;background:#d4ede8;padding:2px 6px;border-radius:3px;color:#1e4a42;">' + mentalId + '</code> <strong>' + sanitize(modelTitle) + '</strong></div>' +
+      '<div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">' + sanitize(modelDesc) + '</div>' +
+    '</div>' +
+    '<div style="margin-bottom:4px;padding:8px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--radius-sm);font-size:12px;color:#166534;">' +
+      '&#10003; ' + mentalId + ' 已添加到个人记忆表' +
+      '<br>&#10003; 知识图谱节点已更新' +
+    '</div>' +
     '<div style="color:var(--text-muted);font-size:11.5px;margin-top:8px;">调用 POST /v1/default/banks/primary/retain<br>时间：' + now + '  |  embedding 已更新  |  consolidation 已触发</div>';
 
   resultDiv.classList.add('show');
-  showToast('记忆已成功写入 Hindsight，' + obsId + ' 已生成', 'success');
+
+  // 自动添加到个人记忆表格
+  addMentalToTable(mentalId, modelTitle, modelDesc, now);
+
+  // 同步更新图谱：添加节点 + 自动关联 observation
+  if (window.addGraphNode) {
+    window.addGraphNode(mentalId, 'mental-model', modelTitle, modelDesc);
+    // 根据抽取的概念自动关联到相关 observation
+    if (window.autoLinkMentalToObs) {
+      var linkedObs = window.autoLinkMentalToObs(mentalId, concepts);
+      // 更新结果面板中的 "已关联" 信息
+      if (linkedObs.length > 0) {
+        var linkedHtml = linkedObs.map(function(o) {
+          return '<code style="background:#d4ede8;padding:1px 5px;border-radius:3px;color:#1e4a42;margin-right:4px;">' + o + '</code>';
+        }).join('');
+        // 更新结果面板底部信息
+        var footerInfo = document.querySelector('#ma-result .result-footer-info');
+        if (!footerInfo) {
+          var resultBody = document.getElementById('ma-result').querySelector('.result-summary-body');
+          var footer = document.createElement('div');
+          footer.className = 'result-footer-info';
+          footer.style.cssText = 'padding:8px 12px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;font-size:12px;color:#0369a1;margin-top:8px;';
+          footer.innerHTML = '&#128279; 已自动关联 observation：' + linkedHtml;
+          resultBody.appendChild(footer);
+        }
+      }
+    }
+  }
+
+  showToast('个人记忆 ' + mentalId + ' 已生成并写入', 'success');
+}
+
+// 根据内容智能建议心智模型标题
+function suggestMentalTitle(content) {
+  var t = content.toLowerCase();
+  if (t.indexOf('沟通') >= 0 || t.indexOf('协作') >= 0 || t.indexOf('团队') >= 0) return '团队协作与沟通模式';
+  if (t.indexOf('风险') >= 0 || t.indexOf('安全') >= 0) return '项目风险意识框架';
+  if (t.indexOf('代码') >= 0 || t.indexOf('review') >= 0 || t.indexOf('审查') >= 0) return '代码质量控制方法论';
+  if (t.indexOf('设计') >= 0 || t.indexOf('ui') >= 0 || t.indexOf('风格') >= 0) return '设计偏好与审美准则';
+  if (t.indexOf('竞品') >= 0 || t.indexOf('市场') >= 0 || t.indexOf('趋势') >= 0) return '竞品分析与市场洞察';
+  if (t.indexOf('迭代') >= 0 || t.indexOf('开发') >= 0 || t.indexOf('流程') >= 0) return '开发流程与迭代策略';
+  if (t.indexOf('自动') >= 0 || t.indexOf('效率') >= 0 || t.indexOf('工具') >= 0) return '自动化与效率提升';
+  if (t.indexOf('部署') >= 0 || t.indexOf('发布') >= 0 || t.indexOf('上线') >= 0) return '发布与部署策略';
+  return '通用认知模式';
+}
+
+// 向个人记忆面板添加新行
+function addMentalToTable(id, title, desc, time) {
+  var tbody = document.querySelector('#panel-mental tbody');
+  if (!tbody) return;
+  var tr = document.createElement('tr');
+  tr.setAttribute('data-row-id', id);
+  tr.innerHTML =
+    '<td><input type="checkbox" class="checkbox row-check"></td>' +
+    '<td>#' + id + '</td>' +
+    '<td>' + sanitize(title) + '</td>' +
+    '<td>' + sanitize(desc) + '</td>' +
+    '<td><span style="color:var(--text-muted);font-size:12px;">用户手动创建</span></td>' +
+    '<td style="font-size:12px;color:var(--text-muted);white-space:nowrap;">' + time + '</td>' +
+    '<td><div class="action-group">' +
+      '<button class="action-btn" title="查看" onclick="viewItem(\'mental-model\',\'' + safeAttr(title) + '\',\'\',\'\',\'' + safeAttr(title) + '\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>' +
+      '<button class="action-btn" title="编辑" onclick="openLocalEditModal(\'mental\',\'' + safeAttr(id) + '\',\'' + safeAttr(title) + '\',\'' + safeAttr(desc) + '\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>' +
+      '<button class="action-btn danger" title="删除" onclick="deleteRow(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>' +
+    '</div></td>';
+  // 添加高亮动画
+  tr.style.animation = 'staleFlashIn 0.5s ease-out';
+  tbody.appendChild(tr);
+
+  // 更新 tab 角标
+  var badge = document.querySelector('.section-tab[data-section="mental"] .tab-badge');
+  if (badge) {
+    var count = tbody.querySelectorAll('tr').length;
+    badge.textContent = count;
+  }
 }
 
 function sanitize(str) {
   return str.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+function safeAttr(str) {
+  return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
 }
 
 // ===== 本地记忆编辑模式 =====
@@ -1680,6 +2867,7 @@ function setLocalMode(on) {
   var hsOnlyTabs = document.querySelectorAll('.section-tab[data-hs-only]');
   var graphPanel = document.getElementById('panel-graph');
   var obsPanel = document.getElementById('panel-observation');
+  var mentalPanel = document.getElementById('panel-mental');
   var currentActive = document.querySelector('.section-tab.active');
 
   if (on) {
@@ -1692,6 +2880,7 @@ function setLocalMode(on) {
     // Ensure hidden panels are not active
     if (graphPanel) graphPanel.classList.remove('active');
     if (obsPanel) obsPanel.classList.remove('active');
+    if (mentalPanel) mentalPanel.classList.remove('active');
   } else {
     // Show hs-only tabs
     for (var k = 0; k < hsOnlyTabs.length; k++) hsOnlyTabs[k].classList.remove('hidden');
@@ -1700,7 +2889,7 @@ function setLocalMode(on) {
   // Update knowledge graph subtitle
   var kgSub = document.querySelector('.kg-subtitle');
   if (kgSub) {
-    kgSub.textContent = on ? '— 本地只读视图（编辑请在记忆条目中进行）' : '— World / Experience / Observation 关联网络';
+    kgSub.textContent = on ? '— 本地只读视图（编辑请在记忆条目中进行）' : '— Mental Model / Observation 关联网络（点击观察展开底层事实）';
   }
 
   // Observation panels: add readonly badge when in local mode
@@ -1720,13 +2909,28 @@ function setLocalMode(on) {
 
 function openLocalAddModal(type) {
   document.getElementById('le-mode').value = 'add';
-  document.getElementById('le-type').value = type;
+  document.getElementById('le-type').value = type || 'mental';
   document.getElementById('le-old-id').value = '';
-  document.getElementById('le-title').textContent = '添加 ' + (type === 'world' ? 'World' : type === 'experience' ? 'Experience' : 'Observation');
-  document.getElementById('le-id').value = '';
-  document.getElementById('le-id').disabled = false;
+  var labels = { world: 'World（客观事实）', experience: 'Experience（Agent 感知）', mental: 'Mental Model（心智模型）' };
+  document.getElementById('le-title').textContent = '新建 ' + (labels[type] || labels.mental);
+  // 自动分配编号
+  var autoId = getNextId(type);
+  document.getElementById('le-id').value = autoId;
+  document.getElementById('le-id').disabled = true;
   document.getElementById('le-label').value = '';
   document.getElementById('le-desc').value = '';
+
+  // Restrict type selector
+  var sel = document.getElementById('le-type');
+  if (type === 'mental') {
+    sel.innerHTML = '<option value="mental">Mental Model — 心智模型</option>';
+    sel.value = 'mental';
+  } else {
+    sel.innerHTML = '<option value="world">World — 客观事实</option><option value="experience">Experience — Agent 感知</option>';
+    if (sel.value !== 'world' && sel.value !== 'experience') sel.value = 'world';
+  }
+  sel.disabled = true;
+
   openModal('local-edit-modal');
 }
 
@@ -1752,7 +2956,44 @@ function saveLocalEntry() {
   if (!id || !label) { showToast('ID 和标题不能为空', 'error'); return; }
 
   if (mode === 'add') {
-    showToast(type + ' 「' + id + '」已添加（本地存储）', 'success');
+    if (type === 'mental') {
+      showToast('心智模型 「' + id + '」已添加', 'success');
+    } else {
+      showToast(type + ' 「' + id + '」已添加 — 正在分析归纳模式...', 'success');
+    }
+
+    // Sync to knowledge graph
+    if (window.addGraphNode) {
+      window.addGraphNode(id, type, label, desc);
+    }
+
+    // Trigger consolidation after add (skip for mental models)
+    if (type !== 'mental') {
+    setTimeout(function() {
+      var banner = document.getElementById('consolidation-banner');
+      if (banner) {
+        banner.classList.add('show');
+        banner.querySelector('.cons-text').textContent = 'Consolidation 进行中 — 新事实「' + label + '」正在检索可归纳模式...';
+        setTimeout(function() {
+          var r = Math.random();
+          if (r < 0.4) {
+            // Case A: new Observation formed
+            banner.classList.add('done');
+            banner.querySelector('.cons-text').textContent = 'Consolidation 完成 — 已生成 1 条新 observation，请查看观察面板';
+          } else if (r < 0.8) {
+            // Case B: strengthened existing
+            banner.classList.add('done');
+            banner.querySelector('.cons-text').textContent = 'Consolidation 完成 — 已有 observation 置信度已强化';
+          } else {
+            // Case C: no match
+            banner.classList.add('done');
+            banner.querySelector('.cons-text').textContent = 'Consolidation 完成 — 暂无可归纳模式，将在后续积累后重新评估';
+          }
+          setTimeout(function() { banner.classList.remove('show', 'done'); }, 4000);
+        }, 2500);
+      }
+    }, 500);
+    }
   } else {
     showToast(type + ' 「' + id + '」已更新（本地存储）', 'success');
   }
@@ -1808,53 +3049,52 @@ document.addEventListener('keydown', function(e) {
   let panning = false, pStartX = 0, pStartY = 0, pTX = 0, pTY = 0;
   let dragNode = null, dragOffX = 0, dragOffY = 0;
   let hoveredNode = null;
+  let highlightedNodeId = null;
   let animFrame = null;
 
-  // ---- Leiden-inspired palette (softer, community-aware) ----
+  // ---- Soft palette — muted pastels, text inside large circles ----
   const C = {
     world: {
-      f1:'#edf7ff', f2:'#d6edfc', stroke:'#5ba0d0', strokeH:'#2d7ab3',
-      text:'#14344d', badge:'#3992d6', badgeTxt:'#fff',
-      glow:'rgba(91,160,208,0.10)', glowH:'rgba(91,160,208,0.22)',
-      edge:'rgba(91,160,208,0.20)', edgeGlow:'rgba(91,160,208,0.05)',
-      zoneFill:'rgba(211,234,248,0.28)', zoneStroke:'rgba(91,160,208,0.20)',
-      labelColor:'#3b7ca8',
+      fill:'#e8edf3', fillH:'#d8dfe8', stroke:'#8fa9bf', strokeH:'#6c8aa3',
+      text:'#2d4358', glow:'rgba(143,169,191,0.18)',
+      edge:'rgba(143,169,191,0.38)',
     },
     experience: {
-      f1:'#f6f2ff', f2:'#e4daf8', stroke:'#9b84e0', strokeH:'#6d4fc4',
-      text:'#2e1560', badge:'#7c5ce0', badgeTxt:'#fff',
-      glow:'rgba(155,132,224,0.10)', glowH:'rgba(155,132,224,0.22)',
-      edge:'rgba(155,132,224,0.20)', edgeGlow:'rgba(155,132,224,0.05)',
-      zoneFill:'rgba(232,222,248,0.26)', zoneStroke:'rgba(155,132,224,0.18)',
-      labelColor:'#7b5ec4',
+      fill:'#eeebf5', fillH:'#e2ddef', stroke:'#a697c6', strokeH:'#8775ae',
+      text:'#3b2f50', glow:'rgba(166,151,198,0.18)',
+      edge:'rgba(166,151,198,0.38)',
     },
     observation: {
-      f1:'#fffdf5', f2:'#fbf0cd', stroke:'#cfa745', strokeH:'#a8791f',
-      text:'#4a3008', badge:'#c08720', badgeTxt:'#fff',
-      glow:'rgba(207,167,69,0.10)', glowH:'rgba(207,167,69,0.22)',
-      edge:'rgba(207,167,69,0.20)', edgeGlow:'rgba(207,167,69,0.05)',
-      zoneFill:'rgba(252,240,200,0.28)', zoneStroke:'rgba(207,167,69,0.20)',
-      labelColor:'#a87e28',
+      fill:'#f7f0e3', fillH:'#f0e4cf', stroke:'#c4a77e', strokeH:'#a8885c',
+      text:'#4a3824', glow:'rgba(196,167,126,0.18)',
+      edge:'rgba(196,167,126,0.42)',
+    },
+    'mental-model': {
+      fill:'#e2f1ea', fillH:'#d0e7dc', stroke:'#7db89f', strokeH:'#5d9a7f',
+      text:'#1e4535', glow:'rgba(125,184,159,0.18)',
+      edge:'rgba(125,184,159,0.42)',
     }
   };
 
   const nodes = [
-    { id:'W001', type:'world', label:'用户住在无锡', desc:'江苏省无锡市，timezone Asia/Shanghai', x:155, y:72 },
-    { id:'W002', type:'world', label:'React 技术栈', desc:'前端使用 React 18.x + Tailwind CSS', x:145, y:195 },
-    { id:'W003', type:'world', label:'腾讯 PM', desc:'在腾讯工作，产品经理或开发人员', x:140, y:322 },
-    { id:'W004', type:'world', label:'偏好简体中文', desc:'所有交互使用简体中文沟通输出', x:148, y:452 },
-    { id:'W005', type:'world', label:'关注协作工具', desc:'追踪 Notion/Figma/Miro/飞书', x:158, y:582 },
-    { id:'W006', type:'world', label:'偏好绿色主题', desc:'偏好使用绿色系作为应用主题色', x:162, y:702 },
-    { id:'E001', type:'experience', label:'使用 Hindsight', desc:'白板讨论中默认使用 Hindsight', x:475, y:118 },
-    { id:'E002', type:'experience', label:'偏好深色编辑器', desc:'工作中偏好深色模式编辑器', x:460, y:258 },
-    { id:'E003', type:'experience', label:'定时任务需求', desc:'下午4点新闻+下午6点趋势', x:468, y:398 },
-    { id:'E004', type:'experience', label:'启动 metalm_v3', desc:'无限画布、便签、画笔等白板', x:452, y:538 },
-    { id:'E005', type:'experience', label:'逐步迭代修改', desc:'增量迭代，聚焦单一问题', x:472, y:668 },
-    { id:'O1', type:'observation', label:'简体中文回答', desc:'基于 W004+E001+E005 归纳', x:815, y:150 },
-    { id:'O2', type:'observation', label:'Skill 稳定性', desc:'基于 E001-E005 归纳', x:790, y:320 },
-    { id:'O3', type:'observation', label:'4点财经新闻', desc:'基于 E003 归纳：自动化新闻', x:808, y:458 },
-    { id:'O4', type:'observation', label:'6点趋势总结', desc:'手动创建：竞品动态', x:798, y:588 },
-    { id:'O5', type:'observation', label:'飞书 AI 动态', desc:'基于 W005 归纳', x:822, y:698 },
+    { id:'W001', type:'world', layer:'bottom', label:'用户住在无锡', desc:'江苏省无锡市，timezone Asia/Shanghai', x:-380, y:-310 },
+    { id:'W002', type:'world', layer:'bottom', label:'React 技术栈', desc:'前端使用 React 18.x + Tailwind CSS', x:-360, y:-170 },
+    { id:'W003', type:'world', layer:'bottom', label:'腾讯 PM', desc:'在腾讯工作，产品经理或开发人员', x:-390, y:40 },
+    { id:'W004', type:'world', layer:'bottom', label:'偏好简体中文', desc:'所有交互使用简体中文沟通输出', x:-370, y:230 },
+    { id:'W005', type:'world', layer:'bottom', label:'关注协作工具', desc:'追踪 Notion/Figma/Miro/飞书', x:-350, y:420 },
+    { id:'W006', type:'world', layer:'bottom', label:'偏好绿色主题', desc:'偏好使用绿色系作为应用主题色', x:-380, y:590 },
+    { id:'E001', type:'experience', layer:'bottom', label:'使用 Hindsight', desc:'白板讨论中默认使用 Hindsight', x:60, y:-330 },
+    { id:'E002', type:'experience', layer:'bottom', label:'偏好深色编辑器', desc:'工作中偏好深色模式编辑器', x:40, y:-160 },
+    { id:'E003', type:'experience', layer:'bottom', label:'定时任务需求', desc:'下午4点新闻+下午6点趋势', x:80, y:50 },
+    { id:'E004', type:'experience', layer:'bottom', label:'启动 metalm_v3', desc:'无限画布、便签、画笔等白板', x:50, y:260 },
+    { id:'E005', type:'experience', layer:'bottom', label:'逐步迭代修改', desc:'增量迭代，聚焦单一问题', x:70, y:460 },
+    { id:'O1', type:'observation', layer:'top', label:'简体中文回答', desc:'多轮交互均使用简体中文，团队沟通规范', x:480, y:-260 },
+    { id:'O2', type:'observation', layer:'top', label:'Skill 稳定性', desc:'使用 skills 的 Agent 成功率 96.7%', x:460, y:-60 },
+    { id:'O3', type:'observation', layer:'top', label:'4点财经新闻', desc:'每天下午4点自动查询当日财经新闻', x:490, y:170 },
+    { id:'O4', type:'observation', layer:'top', label:'6点趋势总结', desc:'每天下午6点总结行业趋势+竞品动态', x:470, y:380 },
+    { id:'O5', type:'observation', layer:'top', label:'飞书 AI 动态', desc:'追踪飞书 AI 协作产品动态', x:480, y:550 },
+    { id:'M1', type:'mental-model', layer:'top', label:'团队沟通最佳实践', desc:'简体中文、保持上下文、聚焦单一问题', x:-140, y:-310 },
+    { id:'M2', type:'mental-model', layer:'top', label:'项目风险评估框架', desc:'定时关注行业趋势和竞品动态', x:-130, y:-100 },
   ];
 
   const edges = [
@@ -1862,33 +3102,48 @@ document.addEventListener('keydown', function(e) {
     { from:'E001', to:'O2' }, { from:'E002', to:'O2' }, { from:'E003', to:'O2' }, { from:'E004', to:'O2' },
     { from:'E003', to:'O3' }, { from:'E003', to:'O4' },
     { from:'W005', to:'O5' },
-    { from:'W004', to:'E001' }, { from:'W002', to:'E004' },
     { from:'W003', to:'W005' }, { from:'W001', to:'W003' },
     { from:'E003', to:'E004' },
+    { from:'M1', to:'O1' }, { from:'M1', to:'O2' },
+    { from:'M2', to:'O3' }, { from:'M2', to:'O4' },
   ];
 
+  // Track which observation nodes are expanded (show connected bottom-layer nodes)
+  const expandedObsIds = new Set();
+
   function getNode(id) { return nodes.find(n => n.id === id); }
-  function nodeRadius(type) { return type === 'observation' ? 28 : type === 'world' ? 24 : 20; }
+  function isNodeVisible(n) {
+    if (n.layer === 'top') return true;
+    // Bottom-layer node is visible if any connected observation is expanded
+    return edges.some(function(e) {
+      if (e.from !== n.id && e.to !== n.id) return false;
+      var obsId = e.from === n.id ? e.to : e.from;
+      var obsNode = getNode(obsId);
+      return obsNode && obsNode.type === 'observation' && expandedObsIds.has(obsId);
+    });
+  }
+  function nodeRadius(type) { return type === 'mental-model' ? 30 : type === 'observation' ? 28 : type === 'world' ? 24 : 22; }
 
   function relaxLayout() {
-    for (let iter = 0; iter < 50; iter++) {
+    for (let iter = 0; iter < 120; iter++) {
       for (let i = 0; i < nodes.length; i++) {
         for (let j = i + 1; j < nodes.length; j++) {
           const dx = nodes[j].x - nodes[i].x;
           const dy = nodes[j].y - nodes[i].y;
           const d = Math.sqrt(dx*dx+dy*dy) || 1;
-          const minD = nodes[i].type === 'observation' ? 110 : 80;
-          if (d < minD) { const f = (minD - d) / minD * 0.9; nodes[i].x -= dx/d*f; nodes[i].y -= dy/d*f; nodes[j].x += dx/d*f; nodes[j].y += dy/d*f; }
+          const sameType = nodes[i].type === nodes[j].type;
+          const minD = sameType ? 40 : 50;
+          if (d < minD) { const f = (minD - d) / minD * 0.6; nodes[i].x -= dx/d*f; nodes[i].y -= dy/d*f; nodes[j].x += dx/d*f; nodes[j].y += dy/d*f; }
         }
-        nodes[i].x -= nodes[i].x * 0.0002; nodes[i].y -= nodes[i].y * 0.0002;
+        nodes[i].x -= nodes[i].x * 0.004; nodes[i].y -= nodes[i].y * 0.004;
       }
       edges.forEach(e => {
         const fn = getNode(e.from), tn = getNode(e.to);
         if (!fn || !tn) return;
         const dx = tn.x - fn.x, dy = tn.y - fn.y;
         const d = Math.sqrt(dx*dx+dy*dy) || 1;
-        const td = 110;
-        if (d > td) { const f = (d - td) / td * 0.05; fn.x += dx/d*f; fn.y += dy/d*f; tn.x -= dx/d*f; tn.y -= dy/d*f; }
+        const td = 130;
+        if (d > td) { const f = (d - td) / td * 0.03; fn.x += dx/d*f; fn.y += dy/d*f; tn.x -= dx/d*f; tn.y -= dy/d*f; }
       });
     }
   }
@@ -1924,79 +3179,157 @@ document.addEventListener('keydown', function(e) {
 
     ctx.clearRect(0, 0, W, H);
 
-    // Background — warm off-white
-    ctx.fillStyle = '#fafaf8';
+    // Background — clean radial gradient
+    var bgGrad = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, Math.max(W, H)*0.8);
+    bgGrad.addColorStop(0, '#ffffff');
+    bgGrad.addColorStop(0.5, '#fafafa');
+    bgGrad.addColorStop(1, '#f0f0f0');
+    ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, W, H);
 
-    // Ultra-subtle dot grid
-    const gs = 52 * scale;
-    const ox = ((viewX * scale + W/2) % gs + gs) % gs;
-    const oy = ((viewY * scale + H/2) % gs + gs) % gs;
-    ctx.fillStyle = 'rgba(148,163,184,0.08)';
-    for (let x = ox; x < W; x += gs) {
-      for (let y = oy; y < H; y += gs) {
-        ctx.beginPath(); ctx.arc(x, y, 1.0, 0, Math.PI*2); ctx.fill();
+    // Refined dot grid — smaller, cleaner
+    var gs = 38 * scale;
+    var ox = ((viewX * scale + W/2) % gs + gs) % gs;
+    var oy = ((viewY * scale + H/2) % gs + gs) % gs;
+    ctx.fillStyle = 'rgba(160,160,170,0.06)';
+    for (var xx = ox; xx < W; xx += gs) {
+      for (var yy = oy; yy < H; yy += gs) {
+        ctx.beginPath(); ctx.arc(xx, yy, 0.8, 0, Math.PI*2); ctx.fill();
       }
     }
 
-    // ---- Edges (cross-community edges more subtle) ----
-    edges.forEach(e => {
-      const fn = getNode(e.from), tn = getNode(e.to);
+    // ---- Edges — refined, subtle, with type-aware styling ----
+    edges.forEach(function(e) {
+      var fn = getNode(e.from), tn = getNode(e.to);
       if (!fn || !tn) return;
-      const crossCommunity = fn.type !== tn.type;
-      const fp = worldToScreen(fn.x, fn.y);
-      const tp = worldToScreen(tn.x, tn.y);
-      const mx = (fp.x + tp.x) / 2;
-      const curve = Math.min(Math.abs(tp.x - fp.x) * 0.22, 55);
-      const cp = { x: mx, y: Math.min(fp.y, tp.y) - curve - 2 };
+      if (!isNodeVisible(fn) || !isNodeVisible(tn)) return;
+      var fp = worldToScreen(fn.x, fn.y);
+      var tp = worldToScreen(tn.x, tn.y);
+      var isMentalObs = (fn.type === 'mental-model' && tn.type === 'observation') ||
+                        (tn.type === 'mental-model' && fn.type === 'observation');
+      var isCross = fn.type !== tn.type && !isMentalObs;
+
+      // Gentle bezier curve for organic feel
+      var mx = (fp.x + tp.x) / 2;
+      var my = (fp.y + tp.y) / 2;
+      var dx = tp.x - fp.x, dy = tp.y - fp.y;
+      var dist = Math.sqrt(dx*dx + dy*dy) || 1;
+      var offset = Math.min(dist * 0.08, 30);
+      var cpx = mx - dy / dist * offset;
+      var cpy = my + dx / dist * offset;
 
       ctx.beginPath();
       ctx.moveTo(fp.x, fp.y);
-      ctx.quadraticCurveTo(cp.x, cp.y, tp.x, tp.y);
-      ctx.strokeStyle = crossCommunity
-        ? 'rgba(148,163,184,0.18)'
-        : C[fn.type].edge;
-      ctx.lineWidth = crossCommunity ? 0.9 : 1.2;
+      ctx.quadraticCurveTo(cpx, cpy, tp.x, tp.y);
+
+      if (isMentalObs) {
+        ctx.setLineDash([4, 5]);
+        ctx.strokeStyle = 'rgba(125,184,159,0.45)';
+        ctx.lineWidth = 1.6;
+      } else if (isCross) {
+        ctx.setLineDash([]);
+        ctx.strokeStyle = 'rgba(140,132,125,0.30)';
+        ctx.lineWidth = 1.2;
+      } else {
+        ctx.setLineDash([]);
+        ctx.strokeStyle = C[fn.type].edge;
+        ctx.lineWidth = 1.5;
+      }
       ctx.stroke();
+      ctx.setLineDash([]);
     });
 
-    // ---- Nodes ----
-    nodes.forEach(n => {
-      const p = worldToScreen(n.x, n.y);
-      const r = nodeRadius(n.type);
-      const c = C[n.type];
-      const isH = hoveredNode === n || dragNode === n;
+    // ---- Nodes — large filled circles with text inside ----
+    nodes.forEach(function(n) {
+      if (!isNodeVisible(n)) return;
+      var p = worldToScreen(n.x, n.y);
+      var r = nodeRadius(n.type);
+      var c = C[n.type];
+      var isH = hoveredNode === n || dragNode === n;
+      var isHighlighted = highlightedNodeId === n.id;
 
-      // Tiny drop shadow
-      ctx.beginPath(); ctx.arc(p.x, p.y + 1, r, 0, Math.PI*2);
-      ctx.fillStyle = 'rgba(15,23,42,0.04)'; ctx.fill();
-
-      // Hover/drag ring
-      if (isH) {
-        ctx.beginPath(); ctx.arc(p.x, p.y, r + 3, 0, Math.PI*2);
-        ctx.fillStyle = c.glowH; ctx.fill();
+      // Highlight pulse ring
+      if (isHighlighted) {
+        var pulse = Math.sin(Date.now() * 0.008) * 0.5 + 0.5;
+        ctx.beginPath(); ctx.arc(p.x, p.y, r + 6, 0, Math.PI*2);
+        ctx.strokeStyle = 'rgba(96,120,180,' + (0.4 * pulse) + ')';
+        ctx.lineWidth = 2; ctx.setLineDash([4, 4]); ctx.stroke();
+        ctx.setLineDash([]);
       }
 
-      // Soft gradient fill
-      const grad = ctx.createRadialGradient(p.x - r*0.2, p.y - r*0.25, r*0.05, p.x, p.y, r);
-      grad.addColorStop(0, c.f1); grad.addColorStop(1, c.f2);
+      // Drop shadow
+      ctx.save();
+      ctx.shadowColor = 'rgba(40,35,30,0.12)';
+      ctx.shadowBlur = 10;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 3;
+
+      // Main circle fill
       ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI*2);
-      ctx.fillStyle = grad; ctx.fill();
+      var grad = ctx.createLinearGradient(p.x, p.y - r, p.x, p.y + r);
+      grad.addColorStop(0, c.fill);
+      grad.addColorStop(1, c.fillH);
+      ctx.fillStyle = grad;
+      ctx.fill();
 
-      // Stroke
+      // Reset shadow for crisp stroke
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+
+      // Border stroke — thicker for hover
+      ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI*2);
       ctx.strokeStyle = isH ? c.strokeH : c.stroke;
-      ctx.lineWidth = isH ? 2.2 : 1.3; ctx.stroke();
+      ctx.lineWidth = isH ? 2.0 : 1.4;
+      ctx.stroke();
 
-      // Label below node
+      // Subtle inner highlight arc (glass sheen)
+      ctx.beginPath();
+      ctx.arc(p.x, p.y - r*0.02, r*0.68, -Math.PI*0.82, -Math.PI*0.18);
+      ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      ctx.restore();
+
+      // Text directly inside the circle
+      var label = n.label;
+      var fontSize = r > 26 ? 11.5 : r > 22 ? 10.5 : 9.5;
+      var maxW = r * 1.7;
+      ctx.font = '600 ' + fontSize + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif';
+      // Truncate if too long
+      var displayLabel = label;
+      if (ctx.measureText(label).width > maxW) {
+        while (ctx.measureText(displayLabel + '…').width > maxW && displayLabel.length > 2) {
+          displayLabel = displayLabel.slice(0, -1);
+        }
+        displayLabel += '…';
+      }
       ctx.fillStyle = c.text;
-      ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
       ctx.textAlign = 'center';
-      ctx.textBaseline = 'top';
-      ctx.fillText(n.label, p.x, p.y + r + 5);
+      ctx.textBaseline = 'middle';
+      ctx.fillText(displayLabel, p.x, p.y);
+
+      // Hover glow
+      if (isH) {
+        ctx.beginPath(); ctx.arc(p.x, p.y, r + 5, 0, Math.PI*2);
+        ctx.fillStyle = c.glow; ctx.fill();
+      }
+
+      // Expanded observation ring
+      if (n.type === 'observation' && expandedObsIds.has(n.id)) {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, r + 7, 0, Math.PI*2);
+        ctx.strokeStyle = c.stroke;
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash([3, 4]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
     });
 
-    const eps = 0.005;
-    if (Math.abs(viewX - targetViewX) > eps || Math.abs(viewY - targetViewY) > eps || Math.abs(scale - targetScale) > 0.0005) {
+    var eps = 0.005;
+    var keepAlive = highlightedNodeId !== null || expandedObsIds.size > 0;
+    if (keepAlive || Math.abs(viewX - targetViewX) > eps || Math.abs(viewY - targetViewY) > eps || Math.abs(scale - targetScale) > 0.0005) {
       animFrame = requestAnimationFrame(draw);
     } else {
       viewX = targetViewX; viewY = targetViewY; scale = targetScale;
@@ -2015,15 +3348,16 @@ document.addEventListener('keydown', function(e) {
 
   function showTT(n, ex, ey) {
     const c = C[n.type];
-    const tl = n.type === 'world' ? 'World' : n.type === 'experience' ? 'Experience' : 'Observation';
+    const tl = n.type === 'world' ? 'World' : n.type === 'experience' ? 'Experience' : n.type === 'observation' ? 'Observation' : 'Mental Model';
+    const hint = n.type === 'observation' ? '<div class="kg-tt-hint">点击展开/收起关联节点</div>' : '';
     tooltip.innerHTML =
-      '<span class="kg-tt-type" style="background:'+c.f1+';color:'+c.stroke+';">'+tl+'</span>'+
+      '<span class="kg-tt-type" style="background:'+c.fill+';color:'+c.stroke+';">'+tl+'</span>'+
       '<div class="kg-tt-title">'+n.label+'</div>'+
       '<div class="kg-tt-desc">'+n.desc+'</div>'+
-      '<div class="kg-tt-id">'+n.id+'</div>';
+      '<div class="kg-tt-id">'+n.id+'</div>' + hint;
     const wr = wrap.getBoundingClientRect();
     let l = ex - wr.left + 16, t = ey - wr.top - 14;
-    if (l + 280 > W) l -= 300; if (t + 130 > H) t -= 145;
+    if (l + 280 > W) l -= 300; if (t + 155 > H) t -= 170;
     if (l < 8) l = 8; if (t < 8) t = 8;
     tooltip.style.left = l + 'px'; tooltip.style.top = t + 'px';
     tooltip.classList.add('visible');
@@ -2105,12 +3439,49 @@ document.addEventListener('keydown', function(e) {
     const r = wrap.getBoundingClientRect();
     const n = findNodeAt(e.clientX - r.left, e.clientY - r.top);
     if (n) {
-      const d = n.type + ': ' + n.label + ' — ' + n.desc;
-      if (n.type === 'observation') viewItem('observation', d);
-      else if (n.type === 'world') viewItem('world', d);
-      else viewItem('experience', d);
+      if (n.type === 'observation') {
+        // Toggle expand/collapse for observation node
+        if (expandedObsIds.has(n.id)) {
+          expandedObsIds.delete(n.id);
+        } else {
+          expandedObsIds.add(n.id);
+        }
+        startLoop();
+      } else if (n.type === 'mental-model') {
+        // Navigate to mental model panel
+        switchSection('mental');
+      } else if (isNodeVisible(n)) {
+        // World/Experience: navigate to entries (only if visible)
+        highlightAndScrollToRow(n.id, n.type);
+      }
+    } else {
+      // Click on empty space — collapse all expanded observations
+      if (expandedObsIds.size > 0) {
+        expandedObsIds.clear();
+        startLoop();
+      }
     }
   });
+
+  // ---- Graph → List Navigation ----
+  window.highlightAndScrollToRow = function(nodeId, nodeType) {
+    // Switch to entries section
+    switchSection('entries');
+    // Switch to correct sub-tab
+    const subTab = nodeType === 'world' ? 'subtab-world' : 'subtab-exp';
+    const subBtn = document.getElementById(subTab);
+    if (subBtn) switchSubTab(subBtn, nodeType === 'world' ? 'world-list' : 'exp-list');
+    // Find and highlight row
+    setTimeout(function() {
+      const row = document.querySelector('tr[data-row-id="' + nodeId + '"]');
+      if (row) {
+        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        row.classList.remove('highlight-row');
+        void row.offsetWidth;
+        row.classList.add('highlight-row');
+      }
+    }, 150);
+  };
 
   // ---- Global API ----
   window.zoomKG = function(factor) {
@@ -2127,6 +3498,119 @@ document.addEventListener('keydown', function(e) {
     zoomLabel.textContent = '100%';
     startLoop();
   };
+  window.addGraphNode = function(id, type, label, desc) {
+    // Check for duplicates
+    if (getNode(id)) return;
+    // Place new node near same-type nodes, with random offset
+    var sameTypeNodes = nodes.filter(function(n) { return n.type === type; });
+    var baseX = 0, baseY = 0;
+    if (sameTypeNodes.length > 0) {
+      sameTypeNodes.forEach(function(n) { baseX += n.x; baseY += n.y; });
+      baseX /= sameTypeNodes.length; baseY /= sameTypeNodes.length;
+      baseX += (Math.random() - 0.5) * 120;
+      baseY += (Math.random() - 0.5) * 120;
+    } else {
+      // Place by type convention
+      if (type === 'world') { baseX = -400; baseY = 650; }
+      else if (type === 'experience') { baseX = 80; baseY = 550; }
+      else if (type === 'mental-model') { baseX = -140; baseY = 650; }
+    }
+    var layer = (type === 'world' || type === 'experience') ? 'bottom' : 'top';
+    nodes.push({ id: id, type: type, layer: layer, label: label, desc: desc, x: baseX, y: baseY });
+    // Re-relax
+    relaxLayout();
+    // Recenter
+    var cx2 = 0, cy2 = 0;
+    nodes.forEach(function(n) { cx2 += n.x; cy2 += n.y; });
+    cx2 /= nodes.length; cy2 /= nodes.length;
+    targetViewX = -cx2; targetViewY = -cy2; targetScale = 1;
+    zoomLabel.textContent = '100%';
+    startLoop();
+  };
+  window.addGraphEdge = function(fromId, toId) {
+    // 防重复
+    var exists = edges.some(function(e) {
+      return (e.from === fromId && e.to === toId) || (e.from === toId && e.to === fromId);
+    });
+    if (exists) return;
+    edges.push({ from: fromId, to: toId });
+    relaxLayout();
+    startLoop();
+  };
+  window.autoLinkMentalToObs = function(mentalId, concepts) {
+    // 从 nodes 中筛选所有 observation 节点
+    var obsNodes = nodes.filter(function(n) { return n.type === 'observation'; });
+    var linkedObsIds = [];
+
+    obsNodes.forEach(function(obs) {
+      var obsLabel = (obs.label || '').toLowerCase();
+      var obsDesc = (obs.desc || '').toLowerCase();
+      var obsText = obsLabel + ' ' + obsDesc;
+
+      for (var i = 0; i < concepts.length; i++) {
+        var kw = concepts[i].toLowerCase();
+        // 精确匹配概念关键词
+        if (obsText.indexOf(kw) >= 0 || kw.indexOf(obsLabel) >= 0) {
+          if (linkedObsIds.indexOf(obs.id) < 0) {
+            linkedObsIds.push(obs.id);
+          }
+          break;
+        }
+      }
+    });
+
+    // 回退：若无精准匹配，关联所有 observation（心智模型天然与观察关联）
+    if (linkedObsIds.length === 0 && obsNodes.length > 0) {
+      obsNodes.forEach(function(obs) { linkedObsIds.push(obs.id); });
+    }
+
+    // 批量添加边
+    for (var j = 0; j < linkedObsIds.length; j++) {
+      window.addGraphEdge(mentalId, linkedObsIds[j]);
+    }
+
+    return linkedObsIds;
+  };
+  window.removeGraphNode = function(id) {
+    // Remove node from nodes array
+    var idx = nodes.findIndex(function(n) { return n.id === id; });
+    if (idx >= 0) nodes.splice(idx, 1);
+
+    // Remove all edges involving this node
+    for (var i = edges.length - 1; i >= 0; i--) {
+      if (edges[i].from === id || edges[i].to === id) {
+        edges.splice(i, 1);
+      }
+    }
+
+    // Clear highlight if this node was highlighted
+    if (highlightedNodeId === id) highlightedNodeId = null;
+
+    // Re-relax and recenter
+    relaxLayout();
+    var cx2 = 0, cy2 = 0;
+    nodes.forEach(function(n) { cx2 += n.x; cy2 += n.y; });
+    cx2 /= nodes.length || 1; cy2 /= nodes.length || 1;
+    targetViewX = -cx2; targetViewY = -cy2; targetScale = 1;
+    zoomLabel.textContent = '100%';
+    startLoop();
+  };
+
+  // ---- List → Graph Highlight (bidirectional) ----
+  document.addEventListener('mouseover', function(e) {
+    var row = e.target.closest('tr[data-row-id]');
+    if (row) {
+      highlightedNodeId = row.getAttribute('data-row-id');
+      startLoop();
+    }
+  });
+  document.addEventListener('mouseout', function(e) {
+    var row = e.target.closest('tr[data-row-id]');
+    if (row && !row.contains(e.relatedTarget)) {
+      highlightedNodeId = null;
+      startLoop();
+    }
+  });
 
   // ---- Init ----
   window.addEventListener('resize', () => { resize(); startLoop(); });
